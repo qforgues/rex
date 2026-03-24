@@ -1,0 +1,172 @@
+{
+  "report_date": "2026-03-23T14:30:00.000000",
+  "statement_period": "March 2026",
+  "account": "Dart Bank",
+  "total_transactions_analyzed": 16,
+  "total_anomalies_found": 5,
+  "critical_anomalies": 4,
+  "anomalies_by_type": {
+    "STATISTICAL_OUTLIER": 2,
+    "NEW_MERCHANT": 2,
+    "DUPLICATE": 1
+  },
+  "summary": {
+    "action_required": true,
+    "recommendation": "Immediate review of flagged transactions recommended. Contact bank if transactions not recognized.",
+    "estimated_suspicious_amount": 9875.75
+  },
+  "anomalies": [
+    {
+      "rank": 1,
+      "type": "STATISTICAL_OUTLIER",
+      "severity": 1.0,
+      "severity_level": "CRITICAL",
+      "transaction": {
+        "date": "2026-03-12 11:00:00",
+        "merchant": "Crypto Exchange Platform",
+        "amount": 5000.00,
+        "description": "Unknown vendor - ANOMALY"
+      },
+      "reason": "Amount $5000.00 is 5.8 std devs from mean ($53.45)",
+      "details": {
+        "threshold": "Normal range: $-82.24 to $189.14"
+      },
+      "risk_factors": [
+        "Extremely high amount (93x average transaction)",
+        "New merchant never seen before",
+        "Crypto platform (high fraud risk category)",
+        "Unusual type of vendor"
+      ],
+      "recommended_action": "IMMEDIATELY verify with bank. Contact Crypto Exchange Platform to confirm or dispute."
+    },
+    {
+      "rank": 2,
+      "type": "STATISTICAL_OUTLIER",
+      "severity": 0.95,
+      "severity_level": "CRITICAL",
+      "transaction": {
+        "date": "2026-03-07 12:00:00",
+        "merchant": "Luxury Hotel Resort",
+        "amount": 3250.75,
+        "description": "Unexpected travel - ANOMALY"
+      },
+      "reason": "Amount $3250.75 is 4.5 std devs from mean ($53.45)",
+      "details": {
+        "threshold": "Normal range: $-82.24 to $189.14"
+      },
+      "risk_factors": [
+        "Very large purchase (61x average transaction)",
+        "Luxury accommodation merchant",
+        "Unplanned travel indicator",
+        "Significant financial impact"
+      ],
+      "recommended_action": "Verify you authorized this travel expense. Contact hotel to confirm booking details if unauthorized."
+    },
+    {
+      "rank": 3,
+      "type": "NEW_MERCHANT",
+      "severity": 0.85,
+      "severity_level": "CRITICAL",
+      "transaction": {
+        "date": "2026-03-05 03:22:00",
+        "merchant": "Midnight Electronics",
+        "amount": 1250.00,
+        "description": "Unknown vendor - ANOMALY"
+      },
+      "reason": "First transaction with merchant \"Midnight Electronics\". Amount is 23x typical spending.",
+      "details": {
+        "merchant_history": "New vendor",
+        "anomaly_type": "NEW_MERCHANT",
+        "time_of_transaction": "3:22 AM (unusual hour)"
+      },
+      "risk_factors": [
+        "Never used this merchant before",
+        "Large purchase amount",
+        "Transaction at 3:22 AM (suspicious timing)",
+        "Electronics category (common fraud target)",
+        "Vague merchant name"
+      ],
+      "recommended_action": "Do not recognize this merchant? Dispute immediately. Check your email/receipts for confirmation."
+    },
+    {
+      "rank": 4,
+      "type": "NEW_MERCHANT",
+      "severity": 0.8,
+      "severity_level": "CRITICAL",
+      "transaction": {
+        "date": "2026-03-18 14:20:00",
+        "merchant": "Unknown Overseas Vendor",
+        "amount": 875.00,
+        "description": "International charge - ANOMALY"
+      },
+      "reason": "First transaction with merchant \"Unknown Overseas Vendor\". International transaction.",
+      "details": {
+        "merchant_history": "New vendor",
+        "transaction_type": "International"
+      },
+      "risk_factors": [
+        "New merchant (first time)",
+        "International transaction (higher fraud risk)",
+        "Large amount ($875)",
+        "Vague merchant name suggests possible fraud",
+        "No clear description of purchase"
+      ],
+      "recommended_action": "Did you make an international purchase? Verify merchant identity. High risk for unauthorized charges."
+    },
+    {
+      "rank": 5,
+      "type": "DUPLICATE",
+      "severity": 0.8,
+      "severity_level": "HIGH",
+      "transaction": {
+        "date": "2026-03-06 10:10:00",
+        "merchant": "Target",
+        "amount": 42.50,
+        "description": "Shopping - DUPLICATE"
+      },
+      "reason": "Duplicate transaction detected: $42.50 to \"Target\" (also on 2026-03-06 10:10:00)",
+      "details": {
+        "duplicate_of": "2026-03-06 10:10:00",
+        "match_type": "Exact duplicate"
+      },
+      "risk_factors": [
+        "Identical amount and merchant on same date/time",
+        "Classic indicator of processing error or fraudulent repeat",
+        "Should never have same-second duplicates"
+      ],
+      "recommended_action": "Contact Target customer service to confirm. Bank may need to reverse one transaction."
+    }
+  ],
+  "additional_analysis": {
+    "high_value_transactions": [
+      {
+        "date": "2026-03-10 14:15:00",
+        "merchant": "Amazon",
+        "amount": 199.99,
+        "status": "FLAGGED_FOR_REVIEW",
+        "reason": "4x typical purchase amount but from known merchant (Amazon)"
+      }
+    ],
+    "normal_transactions": 10,
+    "confidence_level": "HIGH",
+    "baseline_metrics": {
+      "average_transaction": 53.45,
+      "typical_merchants": [
+        "Whole Foods",
+        "Shell Gas Station",
+        "Amazon",
+        "Starbucks",
+        "Target"
+      ],
+      "transaction_frequency": "Multiple per day",
+      "typical_spending_hours": "09:00, 10:00, 14:00, 15:00"
+    }
+  },
+  "next_steps": [
+    "1. Review each critical anomaly immediately",
+    "2. Contact your bank if you do not recognize transactions",
+    "3. Place a temporary freeze if multiple unauthorized charges suspected",
+    "4. File a fraud report for any confirmed unauthorized transactions",
+    "5. Monitor account closely for 30 days after reported fraud"
+  ]
+}

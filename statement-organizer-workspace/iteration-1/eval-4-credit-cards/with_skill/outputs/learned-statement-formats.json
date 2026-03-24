@@ -1,0 +1,70 @@
+{
+  "AmEx": {
+    "file_pattern": "*AmEx*",
+    "detected_fields": [
+      "Card Member",
+      "Card Number",
+      "Reference",
+      "Posting Date",
+      "Description",
+      "Card Present",
+      "Amount (USD)"
+    ],
+    "date_column": "Posting Date",
+    "amount_column": "Amount (USD)",
+    "merchant_column": "Description",
+    "cardholder_column": "Card Member",
+    "card_number_column": "Card Number",
+    "reference_column": "Reference",
+    "card_present_column": "Card Present",
+    "card_type": "Business",
+    "currency": "USD",
+    "format_confidence": 0.98,
+    "learning_date": "2026-03-23",
+    "transactions_processed": 7
+  },
+  "Chase": {
+    "file_pattern": "*Chase*",
+    "detected_fields": [
+      "Transaction Date",
+      "Post Date",
+      "Description",
+      "Category",
+      "Type",
+      "Amount"
+    ],
+    "date_column": "Transaction Date",
+    "post_date_column": "Post Date",
+    "amount_column": "Amount",
+    "merchant_column": "Description",
+    "category_column": "Category",
+    "transaction_type_column": "Type",
+    "card_type": "Personal",
+    "format_confidence": 0.99,
+    "learning_date": "2026-03-23",
+    "transactions_processed": 10
+  },
+  "Visa": {
+    "file_pattern": "*Visa*",
+    "detected_fields": [
+      "Date",
+      "Transaction",
+      "Amount",
+      "Merchant Code",
+      "Merchant Name",
+      "City",
+      "Country"
+    ],
+    "date_column": "Date",
+    "amount_column": "Amount",
+    "merchant_column": "Merchant Name",
+    "transaction_type_column": "Transaction",
+    "merchant_code_column": "Merchant Code",
+    "city_column": "City",
+    "country_column": "Country",
+    "card_type": "Personal",
+    "format_confidence": 0.97,
+    "learning_date": "2026-03-23",
+    "transactions_processed": 10
+  }
+}

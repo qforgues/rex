@@ -1,0 +1,8 @@
+MATCHED INVOICES - AUTO-MARKED PAID
+Date,Amount,Merchant,Invoice ID,Status
+
+AMBIGUOUS MATCHES - NEEDS REVIEW
+Date,Amount,Merchant,Possible Invoices,Recommendation
+
+UNMATCHED TRANSACTIONS - INVESTIGATE
+Date,Amount,Merchant,Action

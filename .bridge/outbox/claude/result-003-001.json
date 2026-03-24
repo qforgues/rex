@@ -1,0 +1,41 @@
+{
+  "schema": "result",
+  "version": 1,
+  "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a",
+  "round": 3,
+  "attempt": 1,
+  "runner": "claude",
+  "timestamp": "2026-03-23T19:23:06.528Z",
+  "instructionsRef": "instructions-003-001.md",
+  "files": [
+    {
+      "path": "server/services/freshBooksApi.js",
+      "content": "const axios = require('axios');\n\n/**\n * FreshBooksApi service class\n * Handles all communication with the FreshBooks REST API.\n * Credentials are loaded from environment variables to keep secrets out of source code.\n */\nclass FreshBooksApi {\n  constructor() {\n    // Base URL for the FreshBooks API (e.g. https://api.freshbooks.com)\n    this.baseUrl = process.env.FRESHBOOKS_API_URL;\n\n    // Bearer token used to authenticate every request\n    this.token = process.env.FRESHBOOKS_API_TOKEN;\n  }\n\n  /**\n   * Validate that the required environment variables are present.\n   * Throws a descriptive error early so misconfiguration is obvious.\n   */\n  _validateConfig() {\n    if (!this.baseUrl) {\n      throw new Error(\n        'FRESHBOOKS_API_URL is not set. Please add it to your .env file.'\n      );\n    }\n    if (!this.token) {\n      throw new Error(\n        'FRESHBOOKS_API_TOKEN is not set. Please add it to your .env file.'\n      );\n    }\n  }\n\n  /**\n   * Fetch all invoices from the FreshBooks API.\n   *\n   * FreshBooks returns invoices nested under the accounting system:\n   *   GET /accounting/account/{accountId}/invoices/invoices\n   * For simplicity in the demo we hit the /invoices path relative to the\n   * configured base URL so the caller can point FRESHBOOKS_API_URL at any\n   * compatible endpoint (including a mock server).\n   *\n   * @returns {Promise<Object>} Raw response data from FreshBooks\n   */\n  async fetchInvoices() {\n    // Guard against missing configuration before making a network call\n    this._validateConfig();\n\n    try {\n      const response = await axios.get(`${this.baseUrl}/invoices`, {\n        headers: {\n          // FreshBooks uses OAuth 2.0 Bearer tokens\n          Authorization: `Bearer ${this.token}`,\n          // Request JSON explicitly\n          Accept: 'application/json',\n        },\n        // Reasonable timeout so the server does not hang indefinitely\n        timeout: 10000,\n      });\n\n      return response.data;\n    } catch (error) {\n      // Log the full error server-side for debugging while keeping the\n      // thrown message generic enough to be safe for client consumption.\n      if (error.response) {\n        // The request was made and the server responded with a non-2xx status\n        console.error(\n          'FreshBooks API responded with an error:',\n          error.response.status,\n          error.response.data\n        );\n      } else if (error.request) {\n        // The request was made but no response was received (network issue)\n        console.error(\n          'No response received from FreshBooks API:',\n          error.message\n        );\n      } else {\n        // Something went wrong while setting up the request\n        console.error('Error setting up FreshBooks API request:', error.message);\n      }\n\n      throw new Error('Failed to fetch invoices');\n    }\n  }\n}\n\n// Export a singleton so the HTTP client is reused across requests\nmodule.exports = new FreshBooksApi();\n",
+      "language": "javascript",
+      "action": "create",
+      "bytes": 2946
+    },
+    {
+      "path": "server/controllers/financeController.js",
+      "content": "const freshBooksApi = require('../services/freshBooksApi');\n\n/**\n * financeController\n * Handles financial data endpoints including FreshBooks invoice retrieval\n * and any future financial overview / summary functionality.\n */\n\n/**\n * GET /api/finance/invoices\n * Fetches all invoices from FreshBooks and returns them as JSON.\n *\n * Success response  – 200 with the raw FreshBooks invoice payload.\n * Failure response  – 500 with a JSON error message safe for the client.\n */\nexports.getInvoices = async (req, res) => {\n  try {\n    const invoices = await freshBooksApi.fetchInvoices();\n    return res.status(200).json(invoices);\n  } catch (error) {\n    // The service already logged the detailed error; return a safe message.\n    console.error('financeController.getInvoices error:', error.message);\n    return res.status(500).json({ error: 'Failed to fetch invoices' });\n  }\n};\n\n/**\n * GET /api/finance/overview\n * Returns a high-level financial summary built from seed / cached data.\n * Placeholder for Phase 3 dashboard integration.\n */\nexports.getOverview = async (req, res) => {\n  try {\n    // TODO: replace with real aggregation logic in Phase 3\n    const overview = {\n      totalRevenue: 0,\n      totalExpenses: 0,\n      netIncome: 0,\n      outstandingInvoices: 0,\n    };\n    return res.status(200).json(overview);\n  } catch (error) {\n    console.error('financeController.getOverview error:', error.message);\n    return res.status(500).json({ error: 'Failed to fetch financial overview' });\n  }\n};\n",
+      "language": "javascript",
+      "action": "create",
+      "bytes": 1509
+    },
+    {
+      "path": "server/routes/financeRoutes.js",
+      "content": "const express = require('express');\nconst router = express.Router();\nconst financeController = require('../controllers/financeController');\n\n/**\n * Finance Routes\n * Base path: /api/finance  (mounted in app.js)\n *\n * GET /api/finance/invoices  – Fetch all invoices from FreshBooks\n * GET /api/finance/overview  – Fetch high-level financial summary\n */\n\n// Fetch all invoices from FreshBooks\nrouter.get('/invoices', financeController.getInvoices);\n\n// Financial overview / dashboard summary\nrouter.get('/overview', financeController.getOverview);\n\nmodule.exports = router;\n",
+      "language": "javascript",
+      "action": "create",
+      "bytes": 576
+    },
+    {
+      "path": "config/env.example",
+      "content": "# ─────────────────────────────────────────────────────────────────────────────\n# Application\n# ─────────────────────────────────────────────────────────────────────────────\nNODE_ENV=development\nPORT=3000\n\n# ─────────────────────────────────────────────────────────────────────────────\n# Authentication\n# ─────────────────────────────────────────────────────────────────────────────\nSESSION_SECRET=replace_with_a_long_random_string\n\n# ─────────────────────────────────────────────────────────────────────────────\n# Database\n# ─────────────────────────────────────────────────────────────────────────────\nDB_PATH=./data/finance.sqlite\n\n# ─────────────────────────────────────────────────────────────────────────────\n# FreshBooks API\n# Obtain credentials from https://my.freshbooks.com/#/developer\n# ─────────────────────────────────────────────────────────────────────────────\nFRESHBOOKS_API_URL=https://api.freshbooks.com\nFRESHBOOKS_API_TOKEN=your_freshbooks_api_token_here\n",
+      "language": "plaintext",
+      "action": "create",
+      "bytes": 2206
+    }
+  ],
+  "summary": "Implemented FreshBooks API integration across three layers: (1) created server/services/freshBooksApi.js with a FreshBooksApi class that validates env config, sets a request timeout, and provides detailed error logging for network vs. API-level failures; (2) created server/controllers/financeController.js with getInvoices (delegates to the service) and a stub getOverview for the dashboard; (3) created server/routes/financeRoutes.js wiring GET /invoices and GET /overview to the controller; (4) created config/env.example with placeholders for all required environment variables including FRESHBOOKS_API_URL and FRESHBOOKS_API_TOKEN."
+}

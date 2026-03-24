@@ -1,0 +1,23 @@
+{
+  "NewBank": {
+    "date_column": "Post Date",
+    "amount_column": "Debit Amount",
+    "merchant_column": "Merchant Name",
+    "description_column": "Description",
+    "debit_amount_column": "Debit Amount",
+    "credit_amount_column": "Credit Amount",
+    "file_pattern": "*NewBank*",
+    "detected_fields": [
+      "Transaction ID",
+      "Post Date",
+      "Merchant Name",
+      "Description",
+      "Debit Amount",
+      "Credit Amount",
+      "Running Balance"
+    ],
+    "auto_detection_confidence": "high",
+    "detection_timestamp": "2026-03-23T11:47:00Z",
+    "learning_notes": "Format auto-detected successfully. Bank uses separate Debit/Credit columns with Post Date as transaction date. Merchant name field provided. All essential fields identified."
+  }
+}

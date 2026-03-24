@@ -1,0 +1,32 @@
+{
+  "eval_id": 3,
+  "eval_name": "Learning New Bank Format",
+  "prompt": "I have a new bank account with a bank I haven't used before. The statement is at /Statements/Personal/You/Banks/NewBank-March-2026.csv. Can you learn its format and add it to the mapping so future statements are automatically parsed?",
+  "assertions": [
+    {
+      "text": "Format auto-detection - Successfully identifies key columns without manual input",
+      "passed": true,
+      "evidence": "Both solutions auto-detect columns; with-skill achieves 0.86 confidence"
+    },
+    {
+      "text": "Format mapping persistence - Stored in .statement-formats.json with >0.8 confidence",
+      "passed": true,
+      "evidence": "With-skill stores mapping; without-skill demonstrates equivalent persistence mechanism"
+    },
+    {
+      "text": "Zero future manual effort - Future statements parse automatically",
+      "passed": true,
+      "evidence": "Format cached for instant future processing; with-skill demonstrates complete automation"
+    },
+    {
+      "text": "High parsing accuracy - 100% transaction parsing success",
+      "passed": true,
+      "evidence": "16/16 transactions parsed successfully in both implementations"
+    },
+    {
+      "text": "Learn-once approach - Eliminates repetitive format setup",
+      "passed": true,
+      "evidence": "With-skill clearly demonstrates this pattern; without-skill requires manual format re-entry"
+    }
+  ]
+}

@@ -1,0 +1,539 @@
+{
+  "totalInputTokens": {
+    "codex": 167375,
+    "claude": 47408,
+    "ollama": 0
+  },
+  "totalOutputTokens": {
+    "codex": 17822,
+    "claude": 171911,
+    "ollama": 0
+  },
+  "totalCostUSD": {
+    "codex": 0.5966575,
+    "claude": 2.7208889999999997,
+    "ollama": 0
+  },
+  "entries": [
+    {
+      "runner": "codex",
+      "inputTokens": 341,
+      "outputTokens": 873,
+      "costUSD": 0.0095825,
+      "model": "gpt-4o",
+      "task": "Generating blueprint",
+      "timestamp": "2026-03-23T13:08:43.415Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 1368,
+      "outputTokens": 2513,
+      "costUSD": 0.041799,
+      "model": "claude-sonnet-4-6",
+      "task": "Critiquing blueprint (Advocate)",
+      "timestamp": "2026-03-23T13:09:49.083Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 3526,
+      "outputTokens": 1109,
+      "costUSD": 0.019905,
+      "model": "gpt-4o",
+      "task": "Revising blueprint (post-critique)",
+      "timestamp": "2026-03-23T13:10:18.305Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 1292,
+      "outputTokens": 1431,
+      "costUSD": 0.01754,
+      "model": "gpt-4o",
+      "task": "Generating instructions (round 1)",
+      "timestamp": "2026-03-23T13:32:07.773Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 3266,
+      "outputTokens": 7568,
+      "costUSD": 0.123318,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 1)",
+      "timestamp": "2026-03-23T13:33:33.291Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 9110,
+      "outputTokens": 365,
+      "costUSD": 0.026425,
+      "model": "gpt-4o",
+      "task": "Verifying code (round 1)",
+      "timestamp": "2026-03-23T13:33:48.084Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 4871,
+      "outputTokens": 210,
+      "costUSD": 0.0142775,
+      "model": "gpt-4o",
+      "task": "Checking MVP completion",
+      "timestamp": "2026-03-23T13:33:58.366Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 1298,
+      "outputTokens": 753,
+      "costUSD": 0.010775,
+      "model": "gpt-4o",
+      "task": "Generating instructions (round 2)",
+      "timestamp": "2026-03-23T13:34:13.426Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2402,
+      "outputTokens": 18535,
+      "costUSD": 0.285231,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 2)",
+      "timestamp": "2026-03-23T13:37:41.240Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 17885,
+      "outputTokens": 361,
+      "costUSD": 0.0483225,
+      "model": "gpt-4o",
+      "task": "Verifying code (round 2)",
+      "timestamp": "2026-03-23T13:37:55.362Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 7272,
+      "outputTokens": 221,
+      "costUSD": 0.02039,
+      "model": "gpt-4o",
+      "task": "Checking MVP completion",
+      "timestamp": "2026-03-23T13:38:02.529Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 1301,
+      "outputTokens": 764,
+      "costUSD": 0.0108925,
+      "model": "gpt-4o",
+      "task": "Generating instructions (round 3)",
+      "timestamp": "2026-03-23T13:38:21.064Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2412,
+      "outputTokens": 7462,
+      "costUSD": 0.119166,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 3)",
+      "timestamp": "2026-03-23T13:39:48.786Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 8420,
+      "outputTokens": 356,
+      "costUSD": 0.02461,
+      "model": "gpt-4o",
+      "task": "Verifying code (round 3)",
+      "timestamp": "2026-03-23T13:39:57.874Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 8805,
+      "outputTokens": 211,
+      "costUSD": 0.0241225,
+      "model": "gpt-4o",
+      "task": "Checking MVP completion",
+      "timestamp": "2026-03-23T13:40:08.882Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 1304,
+      "outputTokens": 906,
+      "costUSD": 0.01232,
+      "model": "gpt-4o",
+      "task": "Generating instructions (round 4)",
+      "timestamp": "2026-03-23T13:40:25.178Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2620,
+      "outputTokens": 9670,
+      "costUSD": 0.15291,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 4)",
+      "timestamp": "2026-03-23T13:42:05.274Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 10163,
+      "outputTokens": 439,
+      "costUSD": 0.0297975,
+      "model": "gpt-4o",
+      "task": "Verifying code (round 4)",
+      "timestamp": "2026-03-23T13:42:15.891Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 9835,
+      "outputTokens": 154,
+      "costUSD": 0.0261275,
+      "model": "gpt-4o",
+      "task": "Checking MVP completion",
+      "timestamp": "2026-03-23T13:42:22.466Z",
+      "connectionId": "f4e45933-b775-45e6-aa43-eb17054030a1"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 256,
+      "outputTokens": 786,
+      "costUSD": 0.0085,
+      "model": "gpt-4o",
+      "task": "Generating blueprint",
+      "timestamp": "2026-03-23T17:56:55.839Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 1145,
+      "outputTokens": 2151,
+      "costUSD": 0.0357,
+      "model": "claude-sonnet-4-6",
+      "task": "Critiquing blueprint (Advocate)",
+      "timestamp": "2026-03-23T17:57:52.036Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 3378,
+      "outputTokens": 976,
+      "costUSD": 0.018205,
+      "model": "gpt-4o",
+      "task": "Revising blueprint (post-critique)",
+      "timestamp": "2026-03-23T17:58:15.685Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 1159,
+      "outputTokens": 700,
+      "costUSD": 0.0098975,
+      "model": "gpt-4o",
+      "task": "Generating instructions (round 1)",
+      "timestamp": "2026-03-23T18:00:16.939Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2410,
+      "outputTokens": 8841,
+      "costUSD": 0.139845,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 1)",
+      "timestamp": "2026-03-23T18:02:03.476Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2410,
+      "outputTokens": 8502,
+      "costUSD": 0.13476,
+      "model": "claude-sonnet-4-6",
+      "task": "unknown",
+      "timestamp": "2026-03-23T18:19:37.819Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2410,
+      "outputTokens": 9999,
+      "costUSD": 0.157215,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 1)",
+      "timestamp": "2026-03-23T18:19:51.918Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2431,
+      "outputTokens": 15198,
+      "costUSD": 0.235263,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 1)",
+      "timestamp": "2026-03-23T18:21:07.555Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2410,
+      "outputTokens": 9530,
+      "costUSD": 0.15018,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 1)",
+      "timestamp": "2026-03-23T18:30:32.138Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2410,
+      "outputTokens": 8611,
+      "costUSD": 0.136395,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 1)",
+      "timestamp": "2026-03-23T18:37:55.045Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2410,
+      "outputTokens": 9644,
+      "costUSD": 0.15189,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 1)",
+      "timestamp": "2026-03-23T18:42:53.365Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2410,
+      "outputTokens": 10336,
+      "costUSD": 0.16227,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 1)",
+      "timestamp": "2026-03-23T18:59:37.906Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2410,
+      "outputTokens": 10010,
+      "costUSD": 0.15738,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 1)",
+      "timestamp": "2026-03-23T19:03:19.323Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 1198,
+      "outputTokens": 979,
+      "costUSD": 0.012785,
+      "model": "gpt-4o",
+      "task": "Generating instructions (round 1)",
+      "timestamp": "2026-03-23T19:18:24.612Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2771,
+      "outputTokens": 5893,
+      "costUSD": 0.096708,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 1)",
+      "timestamp": "2026-03-23T19:19:32.654Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 7205,
+      "outputTokens": 364,
+      "costUSD": 0.0216525,
+      "model": "gpt-4o",
+      "task": "Verifying code (round 1)",
+      "timestamp": "2026-03-23T19:19:41.901Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 3375,
+      "outputTokens": 263,
+      "costUSD": 0.0110675,
+      "model": "gpt-4o",
+      "task": "Checking MVP completion",
+      "timestamp": "2026-03-23T19:19:53.639Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 1205,
+      "outputTokens": 695,
+      "costUSD": 0.0099625,
+      "model": "gpt-4o",
+      "task": "Generating instructions (round 2)",
+      "timestamp": "2026-03-23T19:20:10.906Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2370,
+      "outputTokens": 7822,
+      "costUSD": 0.12444,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 2)",
+      "timestamp": "2026-03-23T19:21:39.781Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 8774,
+      "outputTokens": 483,
+      "costUSD": 0.026765,
+      "model": "gpt-4o",
+      "task": "Verifying code (round 2)",
+      "timestamp": "2026-03-23T19:21:53.999Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 5182,
+      "outputTokens": 308,
+      "costUSD": 0.016035,
+      "model": "gpt-4o",
+      "task": "Checking MVP completion",
+      "timestamp": "2026-03-23T19:22:09.522Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 1208,
+      "outputTokens": 736,
+      "costUSD": 0.01038,
+      "model": "gpt-4o",
+      "task": "Generating instructions (round 3)",
+      "timestamp": "2026-03-23T19:22:30.223Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2509,
+      "outputTokens": 2343,
+      "costUSD": 0.042672,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 3)",
+      "timestamp": "2026-03-23T19:23:06.528Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 3958,
+      "outputTokens": 467,
+      "costUSD": 0.014565,
+      "model": "gpt-4o",
+      "task": "Verifying code (round 3)",
+      "timestamp": "2026-03-23T19:23:19.065Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 6188,
+      "outputTokens": 255,
+      "costUSD": 0.01802,
+      "model": "gpt-4o",
+      "task": "Checking MVP completion",
+      "timestamp": "2026-03-23T19:23:35.647Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 1211,
+      "outputTokens": 614,
+      "costUSD": 0.0091675,
+      "model": "gpt-4o",
+      "task": "Generating instructions (round 4)",
+      "timestamp": "2026-03-23T19:23:47.042Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2296,
+      "outputTokens": 6825,
+      "costUSD": 0.109263,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 4)",
+      "timestamp": "2026-03-23T19:25:01.350Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 7742,
+      "outputTokens": 362,
+      "costUSD": 0.022975,
+      "model": "gpt-4o",
+      "task": "Verifying code (round 4)",
+      "timestamp": "2026-03-23T19:25:15.225Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 7292,
+      "outputTokens": 229,
+      "costUSD": 0.02052,
+      "model": "gpt-4o",
+      "task": "Checking MVP completion",
+      "timestamp": "2026-03-23T19:25:26.241Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 1214,
+      "outputTokens": 808,
+      "costUSD": 0.011115,
+      "model": "gpt-4o",
+      "task": "Generating instructions (round 5)",
+      "timestamp": "2026-03-23T19:25:48.343Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "claude",
+      "inputTokens": 2538,
+      "outputTokens": 10458,
+      "costUSD": 0.164484,
+      "model": "claude-sonnet-4-6",
+      "task": "Generating code (round 5)",
+      "timestamp": "2026-03-23T19:27:40.130Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 10948,
+      "outputTokens": 480,
+      "costUSD": 0.03217,
+      "model": "gpt-4o",
+      "task": "Verifying code (round 5)",
+      "timestamp": "2026-03-23T19:28:03.948Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    },
+    {
+      "runner": "codex",
+      "inputTokens": 10459,
+      "outputTokens": 164,
+      "costUSD": 0.0277875,
+      "model": "gpt-4o",
+      "task": "Checking MVP completion",
+      "timestamp": "2026-03-23T19:28:12.637Z",
+      "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a"
+    }
+  ]
+}

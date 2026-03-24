@@ -1,0 +1,55 @@
+{
+  "round": 5,
+  "attempt": 1,
+  "resultRef": "result-005-001.json",
+  "files": [
+    {
+      "path": "server/routes/financeRoutes.js",
+      "action": "create",
+      "bytes": 1905
+    },
+    {
+      "path": "server/controllers/financeController.js",
+      "action": "create",
+      "bytes": 2073
+    },
+    {
+      "path": "server/services/csvParser.js",
+      "action": "create",
+      "bytes": 5705
+    },
+    {
+      "path": "server/models/Transaction.js",
+      "action": "create",
+      "bytes": 5112
+    },
+    {
+      "path": "config/db.js",
+      "action": "create",
+      "bytes": 1197
+    },
+    {
+      "path": "server/app.js",
+      "action": "create",
+      "bytes": 1511
+    },
+    {
+      "path": "tests/server/csvParser.test.js",
+      "action": "create",
+      "bytes": 5892
+    },
+    {
+      "path": "tests/server/financeController.test.js",
+      "action": "create",
+      "bytes": 4886
+    },
+    {
+      "path": "package.json",
+      "action": "create",
+      "bytes": 900
+    }
+  ],
+  "adoptedAt": "2026-03-23T19:28:06.704Z",
+  "gitBranch": null,
+  "gitCommitSha": null
+}

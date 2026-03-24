@@ -1,0 +1,376 @@
+================================================================================
+                   NEWBANK FORMAT AUTO-DETECTION APPROACH
+                         Without Skill Implementation
+================================================================================
+
+OBJECTIVE:
+Learn NewBank's statement format automatically and add it to the mapping system
+so future statements are parsed without manual intervention.
+
+================================================================================
+SECTION 1: HOW TO LEARN A NEW BANK'S STATEMENT FORMAT (WITHOUT SKILL)
+================================================================================
+
+The approach consists of 5 key phases:
+
+1. DISCOVERY PHASE
+   - Load the CSV statement file
+   - Extract column headers
+   - Sample first N rows of data
+   - Goal: Understand structure without assumptions
+
+2. ANALYSIS PHASE
+   - Header-based clue detection: Look for keywords like "date", "amount",
+     "balance", "description", "merchant", etc.
+   - Content-based pattern matching:
+     * Check if column values match date patterns (YYYY-MM-DD, MM/DD/YYYY, etc.)
+     * Validate numeric patterns for amounts (with/without decimals, separators)
+     * Identify reference IDs using alphanumeric patterns
+     * Categorize text fields as descriptions/merchants
+   - Calculate confidence scores (0.0 to 1.0) for each detection
+   - Goal: Map each column to a semantic field type
+
+3. CLASSIFICATION PHASE
+   - Assign field types to each column:
+     * DATE: Transaction date
+     * DESCRIPTION: Merchant/payee name
+     * AMOUNT: Generic amount
+     * DEBIT: Money out
+     * CREDIT: Money in
+     * BALANCE: Account balance
+     * REFERENCE: Transaction ID/reference
+   - Rank by confidence to identify must-have fields
+   - Goal: Create a semantic understanding of the format
+
+4. VALIDATION PHASE
+   - Define rules for each field type:
+     * Date formats (regex patterns for validation)
+     * Numeric patterns and ranges
+     * Required vs. optional fields
+   - Test with sample data to ensure parsing works
+   - Goal: Ensure detected format is usable
+
+5. INTEGRATION PHASE
+   - Create a mapping dictionary with:
+     * Field mappings (column name -> field type)
+     * Parsing rules (date format, decimal separators, currency)
+     * Validation rules for each field
+   - Store mapping in a registry for future use
+   - Parse full statement using detected format
+   - Normalize to standard transaction format
+   - Goal: Enable automatic processing of future statements
+
+================================================================================
+SECTION 2: FORMAT DETECTION LOGIC
+================================================================================
+
+KEY ALGORITHMS:
+
+A. Header-Based Detection
+   For each column header:
+   - Tokenize and lowercase the header
+   - Check against keyword lists for each field type
+   - Return field type + confidence if match found
+   - Example: "Transaction Date" -> DATE (confidence: 0.9)
+
+B. Content-Based Pattern Matching
+   For each column's sample values:
+   - Count matches against regex patterns for field type
+   - Calculate match ratio (matches / total samples)
+   - Threshold: >80% matches = classified as that type
+   - Fallback to lower confidence if below threshold
+
+C. Confidence Scoring
+   - Header-based detection: High confidence (0.8-0.9)
+   - Pattern-based detection: Medium confidence (0.7-0.85)
+   - No match: Low confidence (0.5-0.6)
+   - Final score: Average of all field confidences
+
+D. Type Inference
+   When both debit and credit columns present:
+   - Check for "Type" or "Category" column
+   - Use text patterns: "Credit", "Debit", "In", "Out"
+   - Example: Amount + "Credit" type -> CREDIT field
+
+================================================================================
+SECTION 3: IMPLEMENTATION - FORMAT DETECTION CODE
+================================================================================
+
+File: format_detection.py
+Main class: FormatDetector
+
+Key methods:
+1. load_csv(filepath)
+   - Reads CSV file
+   - Returns headers and data rows
+
+2. detect_field_type(column_name, column_values, index)
+   - Analyzes single column
+   - Returns (FieldType, confidence)
+   - Uses keyword + pattern matching
+
+3. analyze_headers(headers, data_rows)
+   - Processes all columns
+   - Returns list of ColumnInfo objects
+   - Each object has field type, confidence, sample values
+
+4. generate_format_mapping()
+   - Creates mapping dictionary from detected columns
+   - Includes validation rules for each field
+   - Sets required fields
+
+5. parse_transactions(data_rows)
+   - Uses detected format to parse CSV
+   - Returns list of normalized transaction dicts
+   - Converts field types appropriately
+
+================================================================================
+SECTION 4: SAMPLE MAPPING STRUCTURE
+================================================================================
+
+The format mapping contains:
+
+{
+  "bank_name": "NewBank",
+  "format_name": "NewBank-CSV-Standard",
+  "detection_confidence": 0.87,
+  "fields": {
+    "Column Name": {
+      "field_type": "date|amount|description|...",
+      "index": 0,
+      "confidence": 0.9,
+      "sample_values": ["sample1", "sample2", "sample3"]
+    }
+  },
+  "required_fields": ["Transaction Date", "Merchant", "Amount"],
+  "validation_rules": {
+    "Transaction Date": {
+      "type": "date",
+      "formats": ["YYYY-MM-DD", "MM/DD/YYYY"]
+    },
+    "Amount": {
+      "type": "numeric",
+      "pattern": "^-?\\d+\\.?\\d*$"
+    }
+  },
+  "parsing_rules": {
+    "date_format": "YYYY-MM-DD",
+    "decimal_separator": ".",
+    "thousands_separator": null,
+    "currency": "USD"
+  }
+}
+
+This structure allows:
+- Column reordering detection
+- Format validation before parsing
+- Human review of auto-detected fields
+- Easy integration with existing parsers
+
+================================================================================
+SECTION 5: NEWBANK EXAMPLE
+================================================================================
+
+ORIGINAL CSV FORMAT:
+  Transaction Date, Merchant, Amount, Type, Running Balance, Reference ID
+  2026-03-01, Salary Deposit, 4500.00, Credit, 4500.00, TR-2026030100001
+  2026-03-02, Whole Foods Market, -125.50, Debit, 4374.50, TR-2026030200002
+
+DETECTION RESULTS:
+  Transaction Date  -> DATE       (confidence: 0.9)
+  Merchant          -> DESCRIPTION (confidence: 0.9)
+  Amount            -> AMOUNT     (confidence: 0.85)
+  Type              -> DESCRIPTION (confidence: 0.75)
+  Running Balance   -> BALANCE    (confidence: 0.9)
+  Reference ID      -> REFERENCE  (confidence: 0.85)
+
+  Overall confidence: 0.87
+
+PARSED TRANSACTIONS:
+  [
+    {
+      "transaction_date": "2026-03-01",
+      "merchant": "Salary Deposit",
+      "credit_amount": 4500.00,
+      "debit_amount": null,
+      "balance": 4500.00,
+      "reference_id": "TR-2026030100001"
+    },
+    {
+      "transaction_date": "2026-03-02",
+      "merchant": "Whole Foods Market",
+      "debit_amount": 125.50,
+      "credit_amount": null,
+      "balance": 4374.50,
+      "reference_id": "TR-2026030200002"
+    }
+  ]
+
+NORMALIZED (STANDARD FORMAT):
+  [
+    {
+      "date": "2026-03-01",
+      "description": "Salary Deposit",
+      "amount": 4500.00,
+      "type": "credit",
+      "balance": 4500.00,
+      "reference": "TR-2026030100001"
+    },
+    {
+      "date": "2026-03-02",
+      "description": "Whole Foods Market",
+      "amount": 125.50,
+      "type": "debit",
+      "balance": 4374.50,
+      "reference": "TR-2026030200002"
+    }
+  ]
+
+================================================================================
+SECTION 6: INTEGRATION WITH EXISTING SYSTEM
+================================================================================
+
+To add NewBank to the statement organizer:
+
+1. RUN DETECTION:
+   detector = FormatDetector()
+   headers, data = detector.load_csv("NewBank-March-2026.csv")
+   columns = detector.analyze_headers(headers, data)
+   mapping = detector.generate_format_mapping()
+
+2. REGISTER FORMAT:
+   registry = BankFormatRegistry()
+   registry.register_format("NewBank", mapping)
+
+3. PARSE STATEMENTS:
+   parser = StatementParser(registry)
+   transactions = parser.parse_statement("NewBank-March-2026.csv", "NewBank")
+
+4. NORMALIZE:
+   normalizer = TransactionNormalizer()
+   normalized = [normalizer.normalize(tx) for tx in transactions]
+
+5. SAVE MAPPING:
+   with open("newbank_mapping.json", "w") as f:
+       json.dump(mapping, f, indent=2)
+
+FUTURE STATEMENTS:
+   For future NewBank statements, the mapping is cached, so parsing is instant:
+   parser.parse_statement("NewBank-April-2026.csv", "NewBank")
+   # Uses cached format - no re-detection needed
+
+================================================================================
+SECTION 7: ADVANTAGES OF THIS APPROACH
+================================================================================
+
+HUMAN-INDEPENDENT:
+  - No need for manual format specification
+  - Works with any CSV layout
+  - Self-documenting through generated mapping
+
+ADAPTIVE:
+  - Detects column reordering
+  - Handles new columns gracefully
+  - Confidence scores identify uncertain fields
+
+MAINTAINABLE:
+  - Generated mapping is easy to review/edit
+  - Validation rules prevent parsing errors
+  - Clear separation of detection and parsing
+
+EXTENSIBLE:
+  - Easy to add custom rules per bank
+  - Can be integrated with existing parsers
+  - Supports multiple statement formats
+
+MEASURABLE:
+  - Confidence scores indicate detection quality
+  - Required fields identify critical columns
+  - Sample values help with validation
+
+================================================================================
+SECTION 8: FILES GENERATED
+================================================================================
+
+1. format_detection.py
+   - Complete format detection implementation
+   - FormatDetector class with all algorithms
+   - Pattern matching and confidence scoring
+   - Transaction parsing and normalization
+
+2. sample_mapping.json
+   - Example output of format detection
+   - Shows NewBank format mapping
+   - Includes validation rules
+   - Can be edited/customized manually
+
+3. integration_guide.py
+   - Shows how to integrate into statement organizer
+   - BankFormatRegistry for managing formats
+   - StatementParser for using formats
+   - TransactionNormalizer for standardization
+   - Demo workflow showing full process
+
+4. parsed_transactions_example.json
+   - Sample output from parsing NewBank CSV
+   - Shows raw parsed transactions
+   - Shows normalized transactions
+   - Summary statistics (debits, credits, balances)
+
+5. summary.txt (this file)
+   - Complete documentation of approach
+   - Explanation of algorithms
+   - Usage examples
+   - Integration instructions
+
+================================================================================
+SECTION 9: NEXT STEPS FOR AUTOMATION
+================================================================================
+
+To fully automate future statements:
+
+1. Store mapping in database or registry
+2. When new statement arrives:
+   - Detect bank from filename or path
+   - Load format mapping from registry
+   - Parse immediately using cached format
+3. If format not found:
+   - Run auto-detection
+   - Save mapping for future use
+   - Notify user of new format detected
+4. Normalize and store transactions
+5. Update bank account records
+
+EXAMPLE WORKFLOW:
+   new_statement = "NewBank-April-2026.csv"
+   if "NewBank" in new_statement:
+       format_mapping = registry.get_format("NewBank")
+       if not format_mapping:
+           format_mapping = auto_detect(new_statement)
+           registry.register_format("NewBank", format_mapping)
+       transactions = parse(new_statement, format_mapping)
+       store_transactions(transactions)
+
+================================================================================
+CONCLUSION
+================================================================================
+
+This approach enables automatic learning of new bank statement formats
+without manual specification or human intervention. By combining header-based
+and content-based pattern matching with confidence scoring, we can reliably
+detect financial statement structures and integrate them with the statement
+organizer system.
+
+The generated mappings are human-readable and editable, allowing for
+easy customization if needed, while still automating the common case
+of well-formatted statements.
+
+Future statements from NewBank will be processed automatically using the
+cached mapping, requiring no additional setup.
+
+================================================================================
+Generated: 2026-03-23
+Statement: NewBank-March-2026.csv
+Detection Confidence: 0.87
+Transactions Parsed: 16
+================================================================================

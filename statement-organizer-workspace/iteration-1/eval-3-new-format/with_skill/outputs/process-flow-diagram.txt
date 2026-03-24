@@ -1,0 +1,289 @@
+================================================================================
+STATEMENT ORGANIZER - FORMAT LEARNING FLOW DIAGRAM
+================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════
+INITIAL SETUP (First Statement Ever)
+═══════════════════════════════════════════════════════════════════════════════
+
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  Step 1: User Drops NewBank Statement                              │
+    │  File: /Statements/Personal/You/Banks/NewBank-March-2026.csv       │
+    └─────────────────────────┬───────────────────────────────────────────┘
+                              │
+                              ▼
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  Step 2: Skill Detects Bank Name                                   │
+    │  Input: Filename = "NewBank-March-2026.csv"                        │
+    │  Process: Extract "NewBank" from filename                          │
+    │  Fallback: If needed, read CSV headers for bank ID                 │
+    │  Output: Bank identified as "NewBank"                             │
+    └─────────────────────────┬───────────────────────────────────────────┘
+                              │
+                              ▼
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  Step 3: Read CSV Headers                                          │
+    │  Found Headers:                                                    │
+    │  [0] Transaction ID                                               │
+    │  [1] Post Date                   ← Contains "date"                │
+    │  [2] Merchant Name               ← Contains "merchant"            │
+    │  [3] Description                 ← Contains "description"         │
+    │  [4] Debit Amount                ← Contains "amount" + "debit"    │
+    │  [5] Credit Amount               ← Contains "amount" + "credit"   │
+    │  [6] Running Balance                                              │
+    └─────────────────────────┬───────────────────────────────────────────┘
+                              │
+                              ▼
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  Step 4: Auto-Detect Column Mapping (Pattern Matching)             │
+    │                                                                      │
+    │  Pattern: "date"          Matches: "Post Date"          ✓          │
+    │    → date_column = "Post Date"                                    │
+    │                                                                      │
+    │  Pattern: "amount"        Matches: "Debit Amount"       ✓          │
+    │    → amount_column = "Debit Amount"                               │
+    │                                                                      │
+    │  Pattern: "merchant"      Matches: "Merchant Name"      ✓          │
+    │    → merchant_column = "Merchant Name"                            │
+    │                                                                      │
+    │  Pattern: "description"   Matches: "Description"        ✓          │
+    │    → description_column = "Description"                           │
+    │                                                                      │
+    │  Pattern: "debit"         Matches: "Debit Amount"       ✓          │
+    │    → debit_amount_column = "Debit Amount"                         │
+    │                                                                      │
+    │  Pattern: "credit"        Matches: "Credit Amount"      ✓          │
+    │    → credit_amount_column = "Credit Amount"                       │
+    └─────────────────────────┬───────────────────────────────────────────┘
+                              │
+                              ▼
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  Step 5: Validate Essential Columns                                │
+    │  Check: Has date_column?        YES ✓                             │
+    │  Check: Has amount_column?      YES ✓                             │
+    │  Result: All essential fields found                               │
+    │  Confidence: HIGH                                                  │
+    │  Action: Auto-save format (no user prompt needed)                │
+    └─────────────────────────┬───────────────────────────────────────────┘
+                              │
+                              ▼
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  Step 6: Save Format Mapping to Disk                               │
+    │  Location: /Statements/.statement-formats.json                    │
+    │  Content:                                                          │
+    │  {                                                                 │
+    │    "NewBank": {                                                   │
+    │      "date_column": "Post Date",                                 │
+    │      "amount_column": "Debit Amount",                            │
+    │      "merchant_column": "Merchant Name",                         │
+    │      "description_column": "Description",                        │
+    │      "debit_amount_column": "Debit Amount",                      │
+    │      "credit_amount_column": "Credit Amount",                    │
+    │      "file_pattern": "*NewBank*",                               │
+    │      "auto_detection_confidence": "high",                        │
+    │      "detection_timestamp": "2026-03-23T11:47:00Z"              │
+    │    }                                                              │
+    │  }                                                                │
+    │  Result: Format learned and REMEMBERED FOREVER                  │
+    └─────────────────────────┬───────────────────────────────────────────┘
+                              │
+                              ▼
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  Step 7: Parse Transactions Using Learned Format                  │
+    │                                                                      │
+    │  For each CSV row:                                                │
+    │    Extract date from "Post Date" column                          │
+    │    Extract merchant from "Merchant Name" column                  │
+    │    Extract description from "Description" column                 │
+    │    Extract amount from "Debit Amount" or "Credit Amount"         │
+    │    Create transaction object                                     │
+    │                                                                      │
+    │  Example:                                                          │
+    │    CSV: TXN005,2026-03-07,ONLINE RETAILER,Shopping,249.99,,5532 │
+    │    Output: {date: "2026-03-07", amount: -249.99,                 │
+    │             merchant: "ONLINE RETAILER"}                          │
+    │                                                                      │
+    │  Result: 10 transactions parsed successfully (100% success)      │
+    └─────────────────────────┬───────────────────────────────────────────┘
+                              │
+                              ▼
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  FIRST STATEMENT COMPLETE!                                         │
+    │  ✓ Bank identified                                                 │
+    │  ✓ Format learned automatically (NO manual input)                 │
+    │  ✓ Format saved permanently                                      │
+    │  ✓ All transactions parsed (10/10)                               │
+    │  ✓ Ready for next statement                                      │
+    └─────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FUTURE PROCESSING (All Subsequent Statements)
+═══════════════════════════════════════════════════════════════════════════════
+
+    ONE MONTH LATER...
+
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  User Drops NewBank-April-2026.csv                                 │
+    │  File: /Statements/Personal/You/Banks/NewBank-April-2026.csv       │
+    └─────────────────────────┬───────────────────────────────────────────┘
+                              │
+                              ▼
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  FAST PATH: Format Already Learned!                                │
+    │                                                                      │
+    │  Step 1: Detect bank from filename                                │
+    │    → "NewBank"                                                    │
+    │                                                                      │
+    │  Step 2: Check if format is stored                                │
+    │    → Look up "NewBank" in .statement-formats.json                │
+    │    → FOUND! ✓                                                    │
+    │                                                                      │
+    │  Step 3: Load saved format (instant lookup, no pattern matching)  │
+    │    → date_column = "Post Date"                                   │
+    │    → amount_column = "Debit Amount"                              │
+    │    → merchant_column = "Merchant Name"                           │
+    │    → etc.                                                         │
+    │                                                                      │
+    │  Step 4: Parse transactions using learned format                 │
+    │    → No re-learning, no pattern matching                         │
+    │    → Direct column lookup and extraction                         │
+    │    → All transactions parsed instantly                           │
+    │                                                                      │
+    │  Step 5: Return parsed data                                       │
+    │    → Ready for FreshBooks sync or reporting                     │
+    │    → DONE!                                                        │
+    │                                                                      │
+    │  TIME SAVED:                                                       │
+    │    - No bank detection analysis                                   │
+    │    - No CSV header reading                                        │
+    │    - No pattern matching                                          │
+    │    - No confidence validation                                     │
+    │    - No user prompts                                              │
+    │    → INSTANT processing!                                          │
+    └─────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+WHAT IF NEWBANK CHANGES FORMAT?
+═══════════════════════════════════════════════════════════════════════════════
+
+    Bank sends revised statement format: NewBank-May-2026.csv
+    (They changed "Post Date" to "Transaction Date", "Debit Amount" to "Outgoing")
+
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  Process similar to first statement:                               │
+    │    1. Detect bank: "NewBank"                                      │
+    │    2. Look up in .statement-formats.json: Found old format        │
+    │    3. Try parsing with old format: FAILS (headers don't match)    │
+    │    4. Fall back to pattern matching (re-learning)                 │
+    │    5. Detect new headers: "Transaction Date", "Outgoing", etc.   │
+    │    6. Update format mapping (overwrites old version)              │
+    │    7. Parse transactions with new format                         │
+    │    8. Update timestamp in .statement-formats.json                │
+    │    9. Done!                                                       │
+    │                                                                      │
+    │  Result: Format automatically updated, ready for next statement  │
+    │  No intervention needed - skill handles it automatically         │
+    └─────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FAILURE CASE: What If Pattern Matching Can't Identify Columns?
+═══════════════════════════════════════════════════════════════════════════════
+
+    Bank has unusual column names: "Settlement", "Outflow", "Description"
+
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  Pattern matching on "Settlement":                                 │
+    │    - Contains "date"? NO                                          │
+    │    - Contains "settlement"? NOT IN PATTERNS                       │
+    │    → Not matched as date_column                                  │
+    │                                                                      │
+    │  Validation fails: Essential columns not found                    │
+    │    → Confidence = LOW                                             │
+    │    → Trigger fallback: Ask user to identify columns             │
+    │                                                                      │
+    │  Skill prompts user:                                              │
+    │    "Format not recognized for NewBank. Please identify:           │
+    │     - Date column? (e.g., 'Settlement')                          │
+    │     - Amount column? (e.g., 'Outflow')                           │
+    │     - Merchant column? (e.g., 'Description')"                    │
+    │                                                                      │
+    │  User provides answers (once, only first time)                    │
+    │  Skill saves user-provided mapping                                │
+    │  Skill parses transactions using user mapping                    │
+    │  Skill remembers the mapping forever                             │
+    │  → Future statements processed automatically!                    │
+    └─────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+COMPLETE LIFECYCLE
+═══════════════════════════════════════════════════════════════════════════════
+
+    1st Statement (March)  → [LEARN & SAVE]  → Format stored
+         ▼
+    2nd Statement (April)  → [USE SAVED]     → Instant parsing
+         ▼
+    3rd Statement (May)    → [USE SAVED]     → Instant parsing
+         ▼
+    ... 100 more statements → [USE SAVED]    → Instant parsing
+         ▼
+    Bank Changes Format    → [RE-LEARN]      → Updated & saved
+         ▼
+    Next Statement         → [USE UPDATED]   → Instant parsing
+
+    Total Manual Work: ONCE (at the very beginning)
+    All Future Work: AUTOMATIC
+
+    This is the "Learn Once, Reuse Forever" philosophy.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+COMPARISON: WITH vs WITHOUT SKILL
+═══════════════════════════════════════════════════════════════════════════════
+
+WITHOUT Format Learning (Manual Process):
+    ┌─────────────┐
+    │ Statement 1 │ → User manually identifies columns → 5 minutes
+    └─────────────┘
+    ┌─────────────┐
+    │ Statement 2 │ → User types same columns again → 5 minutes
+    └─────────────┘
+    ┌─────────────┐
+    │ Statement 3 │ → User types same columns again → 5 minutes
+    └─────────────┘
+    Total for 3 statements: 15 minutes of repetitive work
+
+WITH Format Learning (Automatic):
+    ┌─────────────┐
+    │ Statement 1 │ → Skill auto-learns format → 0 seconds
+    └─────────────┘
+    ┌─────────────┐
+    │ Statement 2 │ → Skill uses saved format → 0 seconds
+    └─────────────┘
+    ┌─────────────┐
+    │ Statement 3 │ → Skill uses saved format → 0 seconds
+    └─────────────┘
+    Total for 3 statements: 0 seconds manual work
+    Savings: 15 minutes + future time = MASSIVE productivity gain
+
+
+═══════════════════════════════════════════════════════════════════════════════
+KEY TAKEAWAY
+═══════════════════════════════════════════════════════════════════════════════
+
+    The statement-organizer skill implements an intelligent, automatic system
+    for learning and remembering bank statement formats.
+
+    Process:
+    1. Read CSV headers once
+    2. Use pattern matching to identify columns
+    3. Save mapping to persistent storage
+    4. Reuse forever for all future statements
+    5. Auto-update if bank changes format
+
+    Result: Zero manual intervention after first statement from each bank
+
+═══════════════════════════════════════════════════════════════════════════════

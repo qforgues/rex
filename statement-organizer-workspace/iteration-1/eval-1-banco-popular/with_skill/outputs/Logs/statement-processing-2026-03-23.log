@@ -1,0 +1,54 @@
+STATEMENT PROCESSING LOG
+========================
+
+Date: 2026-03-23T11:49:45.089807
+Bank: Banco Popular
+Account: Joint
+Statement Period: 2026-03
+File: Banco-Popular-Joint-2026-03.csv
+
+FORMAT DETECTION
+----------------
+Detection method: Filename + header matching
+Format library: [learned_banco_popular_format_v1.0]
+Status: ✓ Format successfully loaded
+Time to detect: <1ms
+
+COLUMN MAPPING APPLIED
+----------------------
+Date column:      Fecha
+Merchant column:  Descripción
+Debit column:     Débito (negative amounts)
+Credit column:    Crédito (positive amounts)
+
+TRANSACTION PARSING
+-------------------
+Total transactions scanned: 16
+Transactions parsed: 16
+Parsing errors: 0
+Parsing status: ✓ SUCCESS
+
+STATEMENT ANALYSIS
+------------------
+Total debits:         -2584.04 DOP
+Total credits:         9200.00 DOP
+Net change:            6615.96 DOP
+
+ORGANIZATION
+-------------
+Target folder: /Statements/Personal/Joint/Banks/
+File status: ✓ Organized
+
+FRESHBOOKS SYNC
+---------------
+Status: Skipped (not applicable for Banco Popular)
+Note: FreshBooks integration only supports Dart Bank Portal42 accounts
+
+SUMMARY
+-------
+✓ Bank detected: Banco Popular
+✓ Format loaded from mapping cache
+✓ 16 transactions successfully parsed
+✓ Statement organized in correct folder structure
+✓ Ready for review and reconciliation
+

@@ -1,0 +1,53 @@
+{
+  "card_type": "Chase Personal Card",
+  "identifier_patterns": {
+    "card_number_prefix": "4",
+    "statement_header": "CHASE|JPMORGAN CHASE",
+    "date_format": "MM/DD/YYYY"
+  },
+  "field_mappings": {
+    "transaction_date": {
+      "patterns": ["Posted Date", "Date", "Transaction Date"],
+      "format": "MM/DD/YYYY",
+      "position": "column_0"
+    },
+    "merchant": {
+      "patterns": ["Description", "Merchant Name", "Vendor"],
+      "format": "text_string",
+      "position": "column_1"
+    },
+    "location": {
+      "patterns": ["City", "Location", "Address"],
+      "format": "text_string",
+      "position": "optional_column"
+    },
+    "amount": {
+      "patterns": ["Amount", "Charge"],
+      "format": "currency_usd",
+      "position": "column_last"
+    },
+    "transaction_type": {
+      "patterns": ["Type", "Transaction Type"],
+      "format": "enum: purchase|refund|fee|interest",
+      "position": "secondary_column"
+    }
+  },
+  "document_structure": {
+    "header_rows": 2,
+    "data_start_row": 4,
+    "summary_section": "present",
+    "footer_rows": 1,
+    "page_breaks": "present",
+    "account_summary": "top_section"
+  },
+  "distinctive_features": [
+    "Chase Ultimate Rewards integration",
+    "Simple tabular layout",
+    "Merchant location information",
+    "Clear closing date marking",
+    "Single cardholder per statement"
+  ],
+  "csv_delimiter": "comma",
+  "encoding": "UTF-8",
+  "line_endings": "LF"
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "connection",
+  "version": 1,
+  "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a",
+  "name": "rex-2",
+  "rootPath": "/Users/bigdaddy/Desktop/rex",
+  "requirement": "I have a good, working UI but None of the buttons or actions act as needed.. for now we need demo docs so I can make sure the flow process works and its reading and reporting correctly.",
+  "createdAt": "2026-03-23T17:56:30.154Z",
+  "createdBy": "human",
+  "routingMode": "balanced",
+  "adoption": {
+    "protectedBranches": [
+      "main",
+      "master"
+    ],
+    "maxFileSizeBytes": 1048576,
+    "maxRoundSizeBytes": 5242880,
+    "maxFilesPerRound": 50,
+    "forbiddenPaths": [
+      ".env",
+      "*.pem",
+      "*.key",
+      "credentials.*",
+      "secrets.*"
+    ],
+    "autoCommit": true
+  }
+}

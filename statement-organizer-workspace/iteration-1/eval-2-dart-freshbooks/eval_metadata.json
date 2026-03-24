@@ -1,0 +1,32 @@
+{
+  "eval_id": 2,
+  "eval_name": "Dart Bank FreshBooks Matching",
+  "prompt": "I have a Dart Bank statement for March 2026 with all my Portal42 client payments. It's at /Statements/Business-You/Banks/Dart-Bank-2026-03.csv. Please process it, match transactions to unpaid FreshBooks invoices, and give me a report of what was marked paid vs. what needs review.",
+  "assertions": [
+    {
+      "text": "FreshBooks matching algorithm - Implements amount + dispensary name matching",
+      "passed": true,
+      "evidence": "Both with-skill and without-skill outputs describe matching algorithm; with-skill provides integration-ready code"
+    },
+    {
+      "text": "Three-category report - Correctly categorizes into matched/ambiguous/unmatched",
+      "passed": true,
+      "evidence": "Sample reports show proper categorization with confidence scores"
+    },
+    {
+      "text": "Confidence thresholds - Matched ≥90%, ambiguous 70-89%, unmatched <70%",
+      "passed": true,
+      "evidence": "With-skill defines explicit thresholds; without-skill implements equivalent scoring"
+    },
+    {
+      "text": "Actionable recommendations - Clear guidance on manual review vs. auto-marking",
+      "passed": true,
+      "evidence": "Reports include recommendations; with-skill provides more structured guidance"
+    },
+    {
+      "text": "Time savings - Significant automation vs. manual reconciliation",
+      "passed": true,
+      "evidence": "With-skill: 75-85% time savings (45-60 min vs. 4-6 hours); without-skill: 30-40% savings"
+    }
+  ]
+}

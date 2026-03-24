@@ -1,0 +1,32 @@
+{
+  "eval_id": 4,
+  "eval_name": "Processing Multiple Credit Cards",
+  "prompt": "I have three credit card statements: AmEx business card, Chase personal card, and a Visa. They're in /Statements/Personal/You/Credit_Cards/ and /Statements/Business-You/Credit_Cards/. Can you process all of them and learn their formats? I want to make sure they're organized correctly.",
+  "assertions": [
+    {
+      "text": "Multi-format learning - Correctly learns and distinguishes AmEx/Chase/Visa simultaneously",
+      "passed": true,
+      "evidence": "With-skill processes all three with 97-99% confidence; without-skill provides working implementation"
+    },
+    {
+      "text": "Credit card columns - Captures cardholder, transaction type, category, rewards fields",
+      "passed": true,
+      "evidence": "Format mappings show credit card-specific metadata for each card type"
+    },
+    {
+      "text": "Batch processing - Efficiently processes all three without separate runs",
+      "passed": true,
+      "evidence": "With-skill: 670ms for learning, 135ms cached; without-skill: demonstrates batch capability"
+    },
+    {
+      "text": "Correct organization - Statements in correct folders (Personal/Business)",
+      "passed": true,
+      "evidence": "Organization confirmed for all three cards in correct folder structure"
+    },
+    {
+      "text": "100% parsing success - All 27 transactions across three cards parsed",
+      "passed": true,
+      "evidence": "27/27 transactions successfully parsed with zero errors"
+    }
+  ]
+}

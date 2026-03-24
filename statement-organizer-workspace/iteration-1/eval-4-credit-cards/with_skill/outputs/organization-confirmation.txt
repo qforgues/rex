@@ -1,0 +1,123 @@
+CREDIT CARD STATEMENT ORGANIZATION CONFIRMATION
+================================================
+Processing Date: 2026-03-23
+Skill: statement-organizer
+Evaluation Case: 4 - Multiple Credit Card Formats
+
+STATEMENT 1: AmEx Business Card
+------------------------------
+File: AmEx_Business_2026-03.csv
+Assigned Location: /Statements/Business-You/Credit_Cards/
+Organization Status: CONFIRMED - File correctly placed in Business-You folder
+Cardholder: Company Acme Inc
+Card Account Type: Business
+Transactions: 7
+Processing Date Range: 2026-03-10 to 2026-03-22
+Total Amount: $9,970.50
+
+Format Detected:
+  - Date Column: Posting Date
+  - Amount Column: Amount (USD)
+  - Merchant Column: Description
+  - Cardholder Column: Card Member
+  - Card Number Column: Card Number
+  - Reference Column: Reference
+  - Card Present Indicator: Card Present
+  - Detection Confidence: 98%
+
+Sample Transactions:
+  1. 2026-03-10: DELTA AIRLINES - FLIGHT 1234 ($1,245.00)
+  2. 2026-03-11: MARRIOTT HOTELS - NEW YORK ($3,850.50)
+  3. 2026-03-12: OFFICE DEPOT - SUPPLIES ($247.89)
+
+Status: SUCCESS - Format learned and stored
+
+---
+
+STATEMENT 2: Chase Personal Card
+--------------------------------
+File: Chase_Personal_2026-03.csv
+Assigned Location: /Statements/Personal/You/Credit_Cards/
+Organization Status: CONFIRMED - File correctly placed in Personal/You folder
+Account Type: Personal
+Transactions: 10
+Processing Date Range: 03/01/2026 to 03/22/2026
+Total Amount: -$587.21
+
+Format Detected:
+  - Date Column: Transaction Date
+  - Post Date Column: Post Date
+  - Amount Column: Amount
+  - Merchant Column: Description
+  - Category Column: Category
+  - Transaction Type Column: Type
+  - Detection Confidence: 99%
+
+Sample Transactions:
+  1. 03/01/2026: TRADER JOE'S #234 (-$87.43) [Groceries]
+  2. 03/03/2026: STARBUCKS COFFEE #5621 (-$5.45) [Coffee Shops]
+  3. 03/05/2026: WALGREENS #1234 (-$32.18) [Pharmacy]
+
+Status: SUCCESS - Format learned and stored
+
+---
+
+STATEMENT 3: Visa Personal Card
+-------------------------------
+File: Visa_Personal_2026-03.csv
+Assigned Location: /Statements/Personal/You/Credit_Cards/
+Organization Status: CONFIRMED - File correctly placed in Personal/You folder
+Account Type: Personal
+Transactions: 10
+Processing Date Range: 2026-03-02 to 2026-03-23
+Total Amount: -$1,210.28
+
+Format Detected:
+  - Date Column: Date
+  - Transaction Type Column: Transaction
+  - Amount Column: Amount
+  - Merchant Column: Merchant Name
+  - Merchant Code Column: Merchant Code
+  - City Column: City
+  - Country Column: Country
+  - Detection Confidence: 97%
+
+Sample Transactions:
+  1. 2026-03-02: KROGER SUPERMARKET (-$125.50) [Atlanta, United States]
+  2. 2026-03-04: CVS PHARMACY (-$45.99) [Atlanta, United States]
+  3. 2026-03-06: SEC BROKERAGE SERVICES (-$320.00) [New York, United States]
+
+Status: SUCCESS - Format learned and stored
+
+---
+
+AGGREGATE ORGANIZATION SUMMARY
+==============================
+Total Statements Processed: 3
+Total Transactions Extracted: 27
+Total Cards Categorized: 3 (Business: 1, Personal: 2)
+
+Directory Organization:
+  /Statements/Business-You/Credit_Cards/
+    - AmEx_Business_2026-03.csv (7 transactions)
+
+  /Statements/Personal/You/Credit_Cards/
+    - Chase_Personal_2026-03.csv (10 transactions)
+    - Visa_Personal_2026-03.csv (10 transactions)
+
+Format Mappings Learned: 3
+  - AmEx (Business) - 98% confidence
+  - Chase (Personal) - 99% confidence
+  - Visa (Personal) - 97% confidence
+
+All formats stored in: /Statements/.statement-formats.json
+
+FreshBooks Integration: Not applicable to credit card statements (applies to Dart Bank only)
+
+Next Steps:
+  1. Review stored format mappings in learned-statement-formats.json
+  2. Future AmEx, Chase, and Visa statements will be automatically parsed
+  3. Statements can be processed silently without re-learning formats
+  4. Any format changes detected will trigger automatic format re-learning
+
+PROCESSING RESULT: SUCCESS - All three credit card formats successfully learned and organized

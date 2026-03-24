@@ -1,0 +1,21 @@
+{
+  "Banco Popular": {
+    "date_column": "Fecha",
+    "merchant_column": "Descripci\u00f3n",
+    "debit_amount_column": "D\u00e9bito",
+    "credit_amount_column": "Cr\u00e9dito",
+    "detected_fields": [
+      "Fecha",
+      "Descripci\u00f3n",
+      "D\u00e9bito",
+      "Cr\u00e9dito",
+      "Saldo"
+    ],
+    "file_pattern": "*Banco Popular*",
+    "account_type": "joint",
+    "currency": "DOP",
+    "format_version": "1.0",
+    "detection_method": "learning_algorithm",
+    "learning_notes": "Banco Popular uses separate D\u00e9bito (outgoing) and Cr\u00e9dito (incoming) columns"
+  }
+}

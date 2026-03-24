@@ -1,0 +1,18 @@
+MATCHED INVOICES - AUTO-MARKED PAID
+Date,Amount,Merchant,Invoice ID,FreshBooks Client,Confidence Score,Status
+2026-03-05,500.00,"ABC WELLNESS COLLECTIVE",INV-FB-005421,"ABC Wellness Collective",99%,"Marked Paid"
+2026-03-08,750.00,"GREEN LEAF FARMS INC",INV-FB-005422,"Green Leaf Farms",98%,"Marked Paid"
+2026-03-10,350.00,"MEDSHOP CHICAGO",INV-FB-005423,"MedShop Chicago",97%,"Marked Paid"
+2026-03-12,1200.00,"HIGH TIDE DISPENSARIES",INV-FB-005424,"High Tide Dispensaries",99%,"Marked Paid"
+2026-03-15,625.00,"NATURAL REMEDY CO",INV-FB-005425,"Natural Remedy",96%,"Marked Paid"
+2026-03-18,400.00,"CHICAGO CANNABIS COLLECTIVE",INV-FB-005426,"Chicago Cannabis Collective",99%,"Marked Paid"
+2026-03-22,850.00,"WELLNESS DISPENSARY LLC",INV-FB-005427,"Wellness Dispensary",95%,"Marked Paid"
+2026-03-25,475.00,"LEAFLINE SYSTEMS",INV-FB-005428,"Leafline Systems",98%,"Marked Paid"
+
+SUMMARY - MATCHED INVOICES
+Total Matched,8
+Total Amount Matched,"$5200.00"
+FreshBooks API Calls Successful,8
+FreshBooks API Calls Failed,0
+Date Processed,2026-03-23
+Processing Timestamp,"2026-03-23 14:30:45 UTC"

@@ -1,0 +1,275 @@
+{
+  "bank": "NewBank",
+  "statement_period": "2026-03",
+  "total_transactions": 16,
+  "transactions": [
+    {
+      "transaction_date": "2026-03-01",
+      "merchant": "Salary Deposit",
+      "debit_amount": null,
+      "credit_amount": 4500.0,
+      "balance": 4500.0,
+      "reference_id": "TR-2026030100001",
+      "normalized": {
+        "date": "2026-03-01",
+        "description": "Salary Deposit",
+        "amount": 4500.0,
+        "type": "credit",
+        "balance": 4500.0,
+        "reference": "TR-2026030100001"
+      }
+    },
+    {
+      "transaction_date": "2026-03-02",
+      "merchant": "Whole Foods Market",
+      "debit_amount": 125.5,
+      "credit_amount": null,
+      "balance": 4374.5,
+      "reference_id": "TR-2026030200002",
+      "normalized": {
+        "date": "2026-03-02",
+        "description": "Whole Foods Market",
+        "amount": 125.5,
+        "type": "debit",
+        "balance": 4374.5,
+        "reference": "TR-2026030200002"
+      }
+    },
+    {
+      "transaction_date": "2026-03-03",
+      "merchant": "Electric Company",
+      "debit_amount": 85.0,
+      "credit_amount": null,
+      "balance": 4289.5,
+      "reference_id": "TR-2026030300003",
+      "normalized": {
+        "date": "2026-03-03",
+        "description": "Electric Company",
+        "amount": 85.0,
+        "type": "debit",
+        "balance": 4289.5,
+        "reference": "TR-2026030300003"
+      }
+    },
+    {
+      "transaction_date": "2026-03-05",
+      "merchant": "Restaurant Mario's",
+      "debit_amount": 42.3,
+      "credit_amount": null,
+      "balance": 4247.2,
+      "reference_id": "TR-2026030500004",
+      "normalized": {
+        "date": "2026-03-05",
+        "description": "Restaurant Mario's",
+        "amount": 42.3,
+        "type": "debit",
+        "balance": 4247.2,
+        "reference": "TR-2026030500004"
+      }
+    },
+    {
+      "transaction_date": "2026-03-06",
+      "merchant": "Transfer In",
+      "debit_amount": null,
+      "credit_amount": 1200.0,
+      "balance": 5447.2,
+      "reference_id": "TR-2026030600005",
+      "normalized": {
+        "date": "2026-03-06",
+        "description": "Transfer In",
+        "amount": 1200.0,
+        "type": "credit",
+        "balance": 5447.2,
+        "reference": "TR-2026030600005"
+      }
+    },
+    {
+      "transaction_date": "2026-03-07",
+      "merchant": "CVS Pharmacy",
+      "debit_amount": 35.75,
+      "credit_amount": null,
+      "balance": 5411.45,
+      "reference_id": "TR-2026030700006",
+      "normalized": {
+        "date": "2026-03-07",
+        "description": "CVS Pharmacy",
+        "amount": 35.75,
+        "type": "debit",
+        "balance": 5411.45,
+        "reference": "TR-2026030700006"
+      }
+    },
+    {
+      "transaction_date": "2026-03-08",
+      "merchant": "ATM Withdrawal",
+      "debit_amount": 200.0,
+      "credit_amount": null,
+      "balance": 5211.45,
+      "reference_id": "TR-2026030800007",
+      "normalized": {
+        "date": "2026-03-08",
+        "description": "ATM Withdrawal",
+        "amount": 200.0,
+        "type": "debit",
+        "balance": 5211.45,
+        "reference": "TR-2026030800007"
+      }
+    },
+    {
+      "transaction_date": "2026-03-10",
+      "merchant": "Credit Card Payment",
+      "debit_amount": 1500.0,
+      "credit_amount": null,
+      "balance": 3711.45,
+      "reference_id": "TR-2026031000008",
+      "normalized": {
+        "date": "2026-03-10",
+        "description": "Credit Card Payment",
+        "amount": 1500.0,
+        "type": "debit",
+        "balance": 3711.45,
+        "reference": "TR-2026031000008"
+      }
+    },
+    {
+      "transaction_date": "2026-03-12",
+      "merchant": "Macy's Store",
+      "debit_amount": 89.99,
+      "credit_amount": null,
+      "balance": 3621.46,
+      "reference_id": "TR-2026031200009",
+      "normalized": {
+        "date": "2026-03-12",
+        "description": "Macy's Store",
+        "amount": 89.99,
+        "type": "debit",
+        "balance": 3621.46,
+        "reference": "TR-2026031200009"
+      }
+    },
+    {
+      "transaction_date": "2026-03-13",
+      "merchant": "Shell Gas Station",
+      "debit_amount": 60.0,
+      "credit_amount": null,
+      "balance": 3561.46,
+      "reference_id": "TR-2026031300010",
+      "normalized": {
+        "date": "2026-03-13",
+        "description": "Shell Gas Station",
+        "amount": 60.0,
+        "type": "debit",
+        "balance": 3561.46,
+        "reference": "TR-2026031300010"
+      }
+    },
+    {
+      "transaction_date": "2026-03-15",
+      "merchant": "Direct Deposit",
+      "debit_amount": null,
+      "credit_amount": 3000.0,
+      "balance": 6561.46,
+      "reference_id": "TR-2026031500011",
+      "normalized": {
+        "date": "2026-03-15",
+        "description": "Direct Deposit",
+        "amount": 3000.0,
+        "type": "credit",
+        "balance": 6561.46,
+        "reference": "TR-2026031500011"
+      }
+    },
+    {
+      "transaction_date": "2026-03-16",
+      "merchant": "Insurance Premium",
+      "debit_amount": 250.0,
+      "credit_amount": null,
+      "balance": 6311.46,
+      "reference_id": "TR-2026031600012",
+      "normalized": {
+        "date": "2026-03-16",
+        "description": "Insurance Premium",
+        "amount": 250.0,
+        "type": "debit",
+        "balance": 6311.46,
+        "reference": "TR-2026031600012"
+      }
+    },
+    {
+      "transaction_date": "2026-03-18",
+      "merchant": "AMC Theaters",
+      "debit_amount": 25.0,
+      "credit_amount": null,
+      "balance": 6286.46,
+      "reference_id": "TR-2026031800013",
+      "normalized": {
+        "date": "2026-03-18",
+        "description": "AMC Theaters",
+        "amount": 25.0,
+        "type": "debit",
+        "balance": 6286.46,
+        "reference": "TR-2026031800013"
+      }
+    },
+    {
+      "transaction_date": "2026-03-20",
+      "merchant": "Time Warner Cable",
+      "debit_amount": 45.5,
+      "credit_amount": null,
+      "balance": 6240.96,
+      "reference_id": "TR-2026032000014",
+      "normalized": {
+        "date": "2026-03-20",
+        "description": "Time Warner Cable",
+        "amount": 45.5,
+        "type": "debit",
+        "balance": 6240.96,
+        "reference": "TR-2026032000014"
+      }
+    },
+    {
+      "transaction_date": "2026-03-22",
+      "merchant": "Amazon Purchase",
+      "debit_amount": 125.0,
+      "credit_amount": null,
+      "balance": 6115.96,
+      "reference_id": "TR-2026032200015",
+      "normalized": {
+        "date": "2026-03-22",
+        "description": "Amazon Purchase",
+        "amount": 125.0,
+        "type": "debit",
+        "balance": 6115.96,
+        "reference": "TR-2026032200015"
+      }
+    },
+    {
+      "transaction_date": "2026-03-25",
+      "merchant": "Wire Transfer Out",
+      "debit_amount": null,
+      "credit_amount": 500.0,
+      "balance": 6615.96,
+      "reference_id": "TR-2026032500016",
+      "normalized": {
+        "date": "2026-03-25",
+        "description": "Wire Transfer Out",
+        "amount": 500.0,
+        "type": "credit",
+        "balance": 6615.96,
+        "reference": "TR-2026032500016"
+      }
+    }
+  ],
+  "summary": {
+    "total_debits": 3563.24,
+    "total_credits": 9200.0,
+    "net_change": 5636.76,
+    "starting_balance": null,
+    "ending_balance": 6615.96,
+    "num_transactions": 16,
+    "date_range": {
+      "start": "2026-03-01",
+      "end": "2026-03-25"
+    }
+  }
+}

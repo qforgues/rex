@@ -1,0 +1,145 @@
+{
+  "skill_name": "statement-organizer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I just downloaded my Banco Popular joint account statement for March 2026 and saved it as Banco-Popular-Joint-2026-03.csv in /Statements/Personal/Joint/Banks/. Can you process it and organize it?",
+      "expected_output": "The skill detects the Banco Popular format, learns/applies the format mapping, parses all transactions, logs the results to statement-processing-YYYY-MM-DD.log, and confirms the file is organized correctly in the folder structure.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "Bank detection accuracy",
+          "description": "Skill correctly identifies the file as Banco Popular statement"
+        },
+        {
+          "name": "Format mapping created",
+          "description": "Format mapping for Banco Popular is created and stored in .statement-formats.json"
+        },
+        {
+          "name": "Transaction parsing success",
+          "description": "All transactions in the statement are successfully parsed (100% success rate)"
+        },
+        {
+          "name": "Logging functionality",
+          "description": "Processing log is created with timestamps and transaction details"
+        },
+        {
+          "name": "Ease of use vs baseline",
+          "description": "With-skill solution requires fewer manual steps and less code than without-skill baseline"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I have a Dart Bank statement for March 2026 with all my Portal42 client payments. It's at /Statements/Business-You/Banks/Dart-Bank-2026-03.csv. Please process it, match transactions to unpaid FreshBooks invoices, and give me a report of what was marked paid vs. what needs review.",
+      "expected_output": "The skill parses the Dart Bank statement, matches transactions to unpaid Portal42 invoices by amount + dispensary name, generates a detailed CSV report showing: (a) matched transactions auto-marked paid in FreshBooks, (b) ambiguous matches needing manual review, (c) unmatched transactions. Logs show FreshBooks API calls.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "FreshBooks matching algorithm",
+          "description": "Skill implements amount + dispensary name matching logic as specified"
+        },
+        {
+          "name": "Three-category report generation",
+          "description": "Report correctly categorizes matches into: matched (auto-marked), ambiguous (needs review), unmatched"
+        },
+        {
+          "name": "High-confidence match accuracy",
+          "description": "Matched transactions have ≥90% confidence; ambiguous have 70-89% confidence"
+        },
+        {
+          "name": "Actionable recommendations",
+          "description": "Report includes clear guidance on which transactions need manual review vs. auto-marked as paid"
+        },
+        {
+          "name": "Automation time savings",
+          "description": "With-skill implementation saves significant time vs. manual FreshBooks reconciliation"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I have a new bank account with a bank I haven't used before. The statement is at /Statements/Personal/You/Banks/NewBank-March-2026.csv. Can you learn its format and add it to the mapping so future statements are automatically parsed?",
+      "expected_output": "The skill reads the statement, auto-detects the column headers (date, amount, merchant), creates a format mapping, stores it in .statement-formats.json, and confirms the format is learned. Future statements from this bank are parsed automatically.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "Format auto-detection success",
+          "description": "Skill successfully identifies key columns (date, amount, merchant) without manual input"
+        },
+        {
+          "name": "Format mapping persistence",
+          "description": "Format mapping is saved to .statement-formats.json with >0.8 confidence score"
+        },
+        {
+          "name": "Zero future manual effort",
+          "description": "Future NewBank statements parse automatically using learned format (no relearning needed)"
+        },
+        {
+          "name": "High parsing accuracy",
+          "description": "All transactions from the statement are correctly parsed (100% success rate)"
+        },
+        {
+          "name": "Learn-once, use-forever approach",
+          "description": "Skill demonstrates one-time learning pattern that eliminates repetitive format setup"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I have three credit card statements: AmEx business card, Chase personal card, and a Visa. They're in /Statements/Personal/You/Credit_Cards/ and /Statements/Business-You/Credit_Cards/. Can you process all of them and learn their formats? I want to make sure they're organized correctly.",
+      "expected_output": "The skill processes all three credit card statements, detects each format (AmEx, Chase, Visa), learns and stores the mappings for each, organizes them in the correct folders, and logs all three statements as processed. Format mappings show credit card-specific columns (cardholder, transaction type, etc.).",
+      "files": [],
+      "assertions": [
+        {
+          "name": "Multi-format simultaneous learning",
+          "description": "Skill correctly learns and distinguishes between AmEx, Chase, and Visa formats in one operation"
+        },
+        {
+          "name": "Credit card-specific column detection",
+          "description": "Mappings capture credit card-specific fields (cardholder, transaction type, category, rewards)"
+        },
+        {
+          "name": "Batch processing capability",
+          "description": "Skill efficiently processes all three statements without requiring separate runs"
+        },
+        {
+          "name": "Correct folder organization",
+          "description": "Statements are organized into correct folders (Personal/You/Credit_Cards and Business-You/Credit_Cards)"
+        },
+        {
+          "name": "100% transaction parsing",
+          "description": "All 27 transactions across three cards are successfully parsed"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I processed my March Dart Bank statement and got a report. Can you flag any transactions that look unusual or anomalous compared to my typical spending patterns? For example, unusually large amounts, transactions at unusual times, or vendors I don't normally use. I want to catch fraud early.",
+      "expected_output": "The skill analyzes the Dart Bank transactions, identifies anomalies based on amount deviations, merchant patterns, and frequency, generates a flagged transactions list showing: (a) transactions significantly larger than average, (b) new/unusual merchants, (c) potential duplicates or suspicious patterns. Report is saved to a separate 'anomalies-YYYY-MM-DD.csv' for review.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "Amount deviation detection",
+          "description": "Skill identifies transactions significantly larger than typical spend (e.g., >2.5 standard deviations)"
+        },
+        {
+          "name": "Merchant pattern analysis",
+          "description": "Skill detects new/unusual merchants and suspicious keywords (crypto, gambling, wire transfers)"
+        },
+        {
+          "name": "Duplicate detection",
+          "description": "Skill identifies potential duplicate transactions (same amount, merchant, date)"
+        },
+        {
+          "name": "Severity classification",
+          "description": "Flagged transactions are classified by severity (HIGH, MEDIUM, LOW) based on anomaly strength"
+        },
+        {
+          "name": "Fraud detection effectiveness",
+          "description": "Skill correctly identifies 95%+ of fraud patterns with <8% false positive rate"
+        }
+      ]
+    }
+  ]
+}

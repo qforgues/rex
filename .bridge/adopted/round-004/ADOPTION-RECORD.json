@@ -1,0 +1,30 @@
+{
+  "round": 4,
+  "attempt": 1,
+  "resultRef": "result-004-001.json",
+  "files": [
+    {
+      "path": "server/services/freshBooksApi.js",
+      "action": "create",
+      "bytes": 6187
+    },
+    {
+      "path": "server/controllers/financeController.js",
+      "action": "create",
+      "bytes": 3010
+    },
+    {
+      "path": "server/routes/financeRoutes.js",
+      "action": "create",
+      "bytes": 869
+    },
+    {
+      "path": "tests/server/freshBooksApi.test.js",
+      "action": "create",
+      "bytes": 9621
+    }
+  ],
+  "adoptedAt": "2026-03-23T19:25:18.386Z",
+  "gitBranch": null,
+  "gitCommitSha": null
+}

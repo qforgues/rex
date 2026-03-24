@@ -1,0 +1,512 @@
+================================================================================
+AMBIGUITY HANDLING IN DART BANK TO FRESHBOOKS MATCHING
+Detailed Guide for Manual Review Process
+================================================================================
+
+
+================================================================================
+WHAT IS AN "AMBIGUOUS" MATCH?
+================================================================================
+
+An AMBIGUOUS match occurs when:
+
+1. Transaction amount matches an invoice (STRONG SIGNAL)
+   AND
+2. Client name or date proximity suggests a match (WEAKER SIGNALS)
+   BUT
+3. Invoice ID is missing, unclear, or partially extracted (MISSING STRONG SIGNAL)
+
+Result: Score is 45-69 points - enough confidence to suggest a match, but not
+enough to be certain without human verification.
+
+Example from sample data:
+  Transaction: DART-20260307-001
+  - Merchant: Portal42-Innovation Labs
+  - Amount: $890.25
+  - Reference: "REF-2026-004" (unclear prefix)
+  - Date: 2026-03-07
+
+  Possible match: INV-2026-004 (Innovation Labs, $890.25)
+  Score: 68.0 (HIGH amount match, name match, date proximity, unclear ID)
+
+  Is this the right invoice? Probably yes, but "REF-" prefix is unusual.
+  Need manual confirmation.
+
+
+================================================================================
+HOW TO RESOLVE AMBIGUOUS MATCHES: STEP-BY-STEP GUIDE
+================================================================================
+
+STEP 1: Gather Information
+----------------------------
+
+For each ambiguous transaction, collect:
+1. Bank statement details
+   - Transaction date
+   - Merchant name
+   - Amount
+   - Reference field
+   - Transaction ID
+
+2. Potential invoice(s)
+   - Invoice ID
+   - Client name
+   - Invoice amount
+   - Invoice date
+   - Invoice status (Paid/Unpaid)
+
+3. Additional sources
+   - Email correspondence with client
+   - Payment remittance advice
+   - Client portal activity logs
+   - Invoice copy sent to client
+
+Question to answer: "Did this client definitely pay for this invoice?"
+
+
+STEP 2: Perform Amount Verification
+-------------------------------------
+
+RULE: If amounts don't match exactly, check for:
+
+1. Rounding differences
+   Example: Invoice $1,000.00 vs Transaction $999.99
+   Likely: Banking fee or exchange rate impact
+   Action: MATCH - Accept slight variance
+
+2. Partial payments
+   Example: Invoice $5,000.00 vs Transaction $2,500.00
+   Likely: Client paid half upfront
+   Action: DO NOT MATCH - Create new 50% payment record
+
+3. Multiple invoices combined
+   Example: Invoice $1,000 + Invoice $2,000 = Transaction $3,000
+   Likely: Client paid two invoices together
+   Action: DO NOT MATCH - Create two payment records
+
+4. Currency conversion
+   Example: Invoice in USD, transaction in EUR
+   Likely: Client is international, currency fluctuation
+   Action: MATCH - Apply exchange rate, document conversion
+
+5. Invoice adjustments
+   Example: Invoice $2,000, Credit memo $500 applied = $1,500 payment
+   Likely: Previous credit applied to payment
+   Action: MATCH - Note adjustment in FreshBooks
+
+
+STEP 3: Verify Client Identity
+--------------------------------
+
+RULE: Client name must match (with tolerances for formatting)
+
+Do the following checks:
+
+1. Exact match
+   Example: Invoice from "Acme Corporation" → Transaction from "Acme Corp"
+   Result: MATCH (same client, just abbreviated)
+
+2. Partial match
+   Example: Invoice from "John Smith Consulting" → Transaction from "Smith Consulting"
+   Result: LIKELY MATCH - Check if John Smith is known contact
+
+3. No match
+   Example: Invoice from "ABC Company" → Transaction from "XYZ Corp"
+   Result: DOES NOT MATCH - Look for different invoice
+
+4. Common abbreviations
+   Remember these common matches:
+   - Ltd = Limited
+   - Inc = Incorporated
+   - LLC = Limited Liability Company
+   - Corp = Corporation
+   - Co = Company
+   - Agency = Firm / Consultancy
+
+
+STEP 4: Verify Payment Timing
+-------------------------------
+
+RULE: Payment should arrive 3-30 days after invoice
+
+Check dates:
+1. Invoice date: When was invoice sent to client?
+2. Payment date: When did payment arrive in bank account?
+3. Difference: Calculate days between
+4. Expected: Most payments arrive within 5-15 days
+
+Interpretation:
+
+  Days     | Typical | Action
+  ---------|---------|------------------------------------------
+  Same day | Rare    | Likely error or express payment - verify
+  1-3 days | Rare    | Fast payment, verify if matches
+  3-15 days| NORMAL  | Expected payment window - likely match
+  15-30    | OK      | Late payment but within reasonable window
+  30+      | Risky   | Very late - may not be same invoice
+           |         | Especially risky if multiple old invoices
+
+
+STEP 5: Cross-Reference the Reference Field
+---------------------------------------------
+
+RULE: Bank reference should contain invoice number (in some form)
+
+Check what the reference field contains:
+
+1. Clear invoice number
+   Examples: "INV-2026-001", "Invoice #2026-001", "Inv 2026-001"
+   Action: MATCH - Reference clearly matches
+
+2. Partial invoice number
+   Examples: "001" or "2026-001" (missing invoice prefix)
+   Action: LIKELY MATCH - If other checks pass
+
+3. Order number instead of invoice number
+   Examples: "Order #12345" or "PO #12345"
+   Action: CROSS-CHECK - Look up order, find associated invoice
+
+4. Company name only
+   Examples: "Portal42 Payment" or "June Services"
+   Action: VERIFY - Confirm company matched to right client
+
+5. Meaningless reference
+   Examples: "Transfer", "Payment", "Deposit"
+   Action: REQUIRES VERIFICATION - Use all other signals
+
+6. Client's internal reference
+   Examples: "Project ABC Budget Line 42"
+   Action: CONTACT CLIENT - Ask which invoice this pays
+
+
+STEP 6: Apply Decision Rules
+------------------------------
+
+Once you've verified the above, apply these decision rules:
+
+Decision Matrix:
+  Amount | Client | Date    | Reference | Action
+  -------|--------|---------|-----------|------------------------------------------
+  EXACT  | EXACT  | NORMAL  | CLEAR     | MATCH - Safe to mark as paid
+  EXACT  | EXACT  | NORMAL  | UNCLEAR   | MATCH - Probable match
+  EXACT  | EXACT  | LATE    | CLEAR     | MATCH - Late payment but valid
+  EXACT  | EXACT  | LATE    | UNCLEAR   | REVIEW - Need manual confirmation
+  EXACT  | EXACT  | VERY    | NONE      | DO NOT MATCH - May be old invoice
+         |        | LATE    |           | Contact client
+  EXACT  | DIFF   | NORMAL  | CLEAR     | MATCH - Reference confirms despite name diff
+  EXACT  | NONE   | NORMAL  | CLEAR     | MATCH - Reference is strongest signal
+  DIFF   | EXACT  | NORMAL  | CLEAR     | MATCH - Likely fee/discount applied
+  NONE   | NONE   | ANY     | ANY       | DO NOT MATCH - No signals align
+
+
+STEP 7: Document Your Decision
+-------------------------------
+
+For each ambiguous transaction, record:
+
+1. Final Decision: MATCH / DO NOT MATCH / ESCALATE
+
+2. Confidence Level:
+   HIGH: Multiple signals align (e.g., amount + name + date + reference)
+   MEDIUM: Most signals align, one unclear (e.g., reference is vague)
+   LOW: Only one or two signals align (e.g., amount matches but timing off)
+
+3. Reasoning:
+   Write 1-2 sentences explaining the decision
+   Example: "Exact amount match + client name match + 5 days after invoice.
+            Reference unclear (REF- prefix unusual) but all other signals strong."
+
+4. Follow-up Actions (if any):
+   - Contact client for confirmation?
+   - Verify original invoice sent?
+   - Check for duplicate payments?
+
+5. Reviewer Name and Date
+
+
+================================================================================
+REAL EXAMPLE: RESOLVING AMBIGUOUS MATCHES
+================================================================================
+
+EXAMPLE 1: Clear Ambiguous Case
+=================================
+
+Transaction: DART-20260301-001
+  Date: 2026-03-01
+  Merchant: Portal42-Acme Corp
+  Amount: $2,500.00
+  Reference: INV-2026-001
+
+Matching Algorithm Result:
+  Score: 118.7 (EXACT)
+  Match Type: EXACT MATCH
+  Recommended: INV-2026-001
+
+Your Review:
+  Amount: $2,500.00 = INV-2026-001 amount ($2,500.00) ✓ EXACT
+  Client: "Acme Corp" matches "Acme Corp" ✓ EXACT
+  Date: Invoice 2026-02-25, Payment 2026-03-01 = 4 days ✓ NORMAL
+  Reference: "INV-2026-001" = Invoice ID ✓ CLEAR
+
+Decision: MATCH - HIGH CONFIDENCE
+  Mark invoice INV-2026-001 as PAID in FreshBooks
+
+
+EXAMPLE 2: Problematic Ambiguous Case
+=======================================
+
+Transaction: DART-20260307-001
+  Date: 2026-03-07
+  Merchant: Portal42-Innovation Labs
+  Amount: $890.25
+  Reference: REF-2026-004
+
+Matching Algorithm Result:
+  Score: 68.0 (AMBIGUOUS)
+  Match Type: AMBIGUOUS
+  Suggested Invoice: INV-2026-004
+  2nd Choice: INV-2026-005
+
+Your Review:
+  Amount: $890.25 = INV-2026-004 amount ($890.25) ✓ EXACT
+  Client: "Innovation Labs" matches "Innovation Labs" ✓ EXACT
+  Date: Invoice 2026-03-01, Payment 2026-03-07 = 6 days ✓ NORMAL
+  Reference: "REF-2026-004" = Unclear prefix (unusual "REF-" instead of "INV-")
+             But "2026-004" matches invoice number ✓ PROBABLE
+
+Decision: MATCH - MEDIUM CONFIDENCE
+  Likely Reason: Client used non-standard reference prefix "REF-" instead of "INV-"
+  Action: Mark invoice INV-2026-004 as PAID
+  Follow-up: Send note to client asking to use "INV-" prefix for future payments
+
+
+EXAMPLE 3: Unresolvable Ambiguous Case
+========================================
+
+Transaction: DART-20260312-001
+  Date: 2026-03-12
+  Merchant: Portal42-Creative Studio
+  Amount: $1,500.75
+  Reference: 2026-006
+
+Matching Algorithm Result:
+  Score: 68.7 (AMBIGUOUS)
+  Match Type: AMBIGUOUS
+  Suggested Invoice: INV-2026-006
+  2nd Choice: INV-2026-008
+
+Your Review:
+  Amount: $1,500.75 = INV-2026-006 amount ($1,500.75) ✓ EXACT
+  Client: "Creative Studio" matches "Creative Studio" ✓ EXACT
+  Date: Invoice 2026-03-08, Payment 2026-03-12 = 4 days ✓ NORMAL
+  Reference: "2026-006" = Partial invoice number (missing "INV-" prefix)
+             Matches INV-2026-006 but also could be order #2026-006 ✓ UNCLEAR
+
+Decision: ESCALATE - REQUIRES VERIFICATION
+  Reason: Reference is too vague - client may have used order number instead
+  Action: Contact Creative Studio
+          Email: "Hi, we received $1,500.75 on 3/12. Is this payment for
+                  Invoice INV-2026-006 (Design work, dated 3/8)?"
+  Wait For: Client confirmation before marking paid
+
+
+================================================================================
+HANDLING AMBIGUITY: SPECIAL CASES
+================================================================================
+
+SPECIAL CASE 1: Multiple Invoices, One Payment
+================================================
+Situation: Client sends single payment but owes on multiple invoices
+
+Example: Client pays $5,000 but has two outstanding invoices:
+  - INV-2026-001: $3,000
+  - INV-2026-002: $2,000
+  Total: $5,000 (payment covers both)
+
+How matching algorithm handles it:
+  Only matches first invoice (DART txn → INV-2026-001)
+  Leaves second invoice unmatched
+
+Your Action:
+  1. Recognize pattern from unmatched_invoices.txt report
+  2. Check if payment matches sum of unmatched invoices
+  3. Check payment reference for multiple invoice numbers
+  4. Manually split payment across multiple invoices
+  5. Email accounting: "Payment covers INV-2026-001 AND INV-2026-002"
+
+
+SPECIAL CASE 2: Partial Payment (Payment < Invoice)
+=====================================================
+Situation: Client pays less than invoice amount
+
+Example: Invoice $5,000, Payment $2,500 (50% payment)
+
+How matching algorithm handles it:
+  Amount doesn't match, scores as ambiguous or no-match
+
+Your Action:
+  1. DO NOT mark invoice as paid (still partially unpaid)
+  2. Create separate "partial payment" record
+  3. In FreshBooks: Record $2,500 payment, leave balance of $2,500 unpaid
+  4. Note: "Partial payment received, $2,500 pending"
+  5. Follow up: When will remaining $2,500 arrive?
+
+
+SPECIAL CASE 3: Overpayment (Payment > Invoice)
+================================================
+Situation: Client pays more than invoice amount
+
+Example: Invoice $2,500, Payment $2,750 (overpaid by $250)
+
+How matching algorithm handles it:
+  Amount doesn't match, scores as ambiguous or no-match
+
+Your Action:
+  1. Check if it's intentional (prepayment, retainer, credit balance)
+  2. In FreshBooks: Mark invoice as paid, create credit memo for $250
+  3. Check client account: May have other unpaid invoices
+     - If yes: Apply overpayment to next invoice
+     - If no: Note as "Account credit" for future invoices
+  4. Send confirmation email to client
+
+
+SPECIAL CASE 4: Duplicate Payment
+===================================
+Situation: Same invoice paid twice (accidental duplicate)
+
+Example: INV-2026-001 paid twice:
+  - DART-20260301-001: $2,500 on 2026-03-01
+  - DART-20260308-001: $2,500 on 2026-03-08
+
+How matching algorithm handles it:
+  First payment matches correctly (score 118.7)
+  Second payment: "No available invoices to match" (already locked)
+
+Your Action:
+  1. Contact client immediately: "Received double payment for INV-2026-001"
+  2. Options:
+     a) Request refund of duplicate payment
+     b) Apply to next invoice (if client authorizes)
+     c) Hold as account credit
+  3. Do not mark invoice as paid twice in FreshBooks
+  4. Create note documenting the duplicate and resolution
+
+
+SPECIAL CASE 5: Invoice Not Yet in FreshBooks
+================================================
+Situation: Client paid for invoice, but it's not in FreshBooks yet
+
+Example: Client pays $3,500, but matching finds no $3,500 invoice
+
+How matching algorithm handles it:
+  Scores as no-match (no invoice to match)
+
+Your Action:
+  1. Check FreshBooks: Is invoice really missing?
+  2. Check email: Did we send this invoice recently?
+  3. Check accounting: Is it staged for entry but not yet created?
+  4. Options:
+     a) Create the invoice retroactively in FreshBooks
+     b) Hold payment in "pending" category
+     c) Contact client: "Did you prepay for a new project?"
+  5. Once invoice created, run matching again
+
+
+================================================================================
+ESCALATION CRITERIA: WHEN TO ESCALATE
+================================================================================
+
+Escalate to Accounting Manager if:
+
+1. Amount ambiguity
+   - Can't determine if partial or full payment
+   - Multiple possible invoices of same amount
+   - Overpayment or underpayment without clear reason
+
+2. Client ambiguity
+   - Merchant name doesn't clearly match any client
+   - Possible fraud or misattributed payment
+   - New client not yet in FreshBooks
+
+3. Timing issues
+   - Payment received before invoice date (prepayment?)
+   - Payment >60 days after invoice (very late payment?)
+   - Check for invoice recreation or re-sent invoices
+
+4. Reference unclear
+   - No identifiable invoice number
+   - Multiple possible interpretations
+   - Client reference doesn't map to known system
+
+5. High-value transactions
+   - Over your approval limit?
+   - Requires manual authorization?
+
+6. Duplicate concerns
+   - Possible duplicate payment detected
+   - Possible fraud flag
+
+7. When unsure
+   - Better to escalate than to incorrectly mark invoice as paid
+   - Escalation is faster than fixing a wrong match
+
+
+Escalation Template Email:
+==========================
+
+To: Accounting Manager
+Subject: Payment Match Escalation - [TransactionID]
+
+Transaction Details:
+  - ID: DART-20260307-001
+  - Date: 2026-03-07
+  - Amount: $890.25
+  - Merchant: Portal42-Innovation Labs
+  - Reference: REF-2026-004
+
+Suggested Match: INV-2026-004 (Innovation Labs, $890.25)
+Confidence: MEDIUM - Reference uses "REF-" prefix (unusual)
+
+Question for You:
+  Is "REF-2026-004" a standard payment reference we should accept?
+  Or should we contact the client for clarification?
+
+My Recommendation:
+  Likely match but flag client to use "INV-" prefix for future payments
+
+Please advise: APPROVE or REQUEST CLARIFICATION?
+
+
+================================================================================
+SUMMARY: AMBIGUITY RESOLUTION WORKFLOW
+================================================================================
+
+1. Generate matching report (daily/weekly)
+2. Extract ambiguous transactions (score 45-69)
+3. For each ambiguous transaction:
+   a. Gather information (bank + invoice + email records)
+   b. Verify amount (exact or with documented reason)
+   c. Verify client (name match)
+   d. Verify timing (date within expected window)
+   e. Verify reference (maps to invoice number)
+   f. Apply decision rules (MATCH / DO NOT MATCH / ESCALATE)
+4. Document decision with reasoning
+5. Update FreshBooks with resolved matches
+6. Escalate unresolved cases to manager
+7. Send follow-up emails to clients with non-standard references
+8. Track metrics: How many ambiguous? What % resolved? Time to resolve?
+
+Target: <5% unresolved ambiguous matches (escalated cases)
+
+
+================================================================================
+END OF GUIDE
+================================================================================
+
+For the sample report, all 8 ambiguous transactions can likely be resolved
+by the decision matrix (they all have EXACT amounts and client names).
+
+The main issue is reference formatting - standardizing to "INV-YYYY-NNN"
+would move most of these from AMBIGUOUS to EXACT category.
+
+Questions? See MATCHING_APPROACH_SUMMARY.txt for algorithm details.

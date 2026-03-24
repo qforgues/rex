@@ -1,0 +1,26 @@
+AMBIGUOUS MATCHES - NEEDS REVIEW
+Date,Amount,Merchant,Possible Invoices,Confidence Score,Reason for Ambiguity,Recommendation
+2026-03-06,300.00,"MEDSHOP","INV-FB-005429 ($300.00 - MedShop Inc) | INV-FB-005430 ($300.00 - MedShop Chicago)",75%,"Same amount, merchant name slightly different across locations","Verify which location this payment is for"
+2026-03-11,550.00,"ABC WELLNESS","INV-FB-005431 ($550.00 - ABC Wellness Collective) | INV-FB-005432 ($545.00 - ABC Wellness Co)",72%,"Amount matches one, close to another; name variation","Confirm payment destination and check if partial payment"
+2026-03-16,425.00,"GREEN LEAF","INV-FB-005433 ($425.00 - Green Leaf Farms) | INV-FB-005434 ($425.00 - Greenleaf Associates)",78%,"Two invoices with same amount from similar-named clients","Review vendor details to confirm correct recipient"
+2026-03-19,200.00,"NATURE REMEDY","INV-FB-005435 ($200.00 - Natural Remedy) | INV-FB-005436 ($200.00 - Nature's Remedy Shop)",73%,"Similar merchant names, exact amount match","Check FreshBooks notes or client contact info"
+2026-03-21,675.00,"WELLNESS","INV-FB-005437 ($675.00 - Wellness Dispensary) | INV-FB-005438 ($675.00 - Chicago Wellness Co) | INV-FB-005439 ($675.00 - Wellness Plus)",71%,"Three invoices with identical amount and generic name","Very high ambiguity - review all three invoices in detail"
+
+SUMMARY - AMBIGUOUS MATCHES
+Total Ambiguous,5
+Total Amount Pending,"$2150.00"
+Highest Confidence,78%
+Lowest Confidence,71%
+Average Confidence,74%
+Status,"Awaiting user review and confirmation"
+Next Step,"User must confirm which invoice each transaction applies to"
+Date Processed,2026-03-23
+Processing Timestamp,"2026-03-23 14:30:45 UTC"
+
+INSTRUCTIONS FOR USER REVIEW
+"For each ambiguous match above:
+1. Open FreshBooks and find the invoices listed in 'Possible Invoices'
+2. Check client details, invoice dates, and project notes
+3. Verify which invoice this Dart Bank transaction should pay
+4. Respond with: 'For 2026-03-06 $300.00 MedShop transaction, mark INV-FB-005429 as paid'
+5. I will update FreshBooks accordingly"

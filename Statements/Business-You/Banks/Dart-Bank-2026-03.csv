@@ -1,0 +1,15 @@
+Transaction Date,Merchant,Amount,Category,Type,Description
+2026-03-01,PORTAL42 DEPOSIT,5500.00,Income,Deposit,Portal42 March payroll
+2026-03-02,GREEN THUMB DISPENSARY,-1200.50,Purchase,Debit,Wholesale purchase - Green Thumb Denver
+2026-03-03,SUNNY SIDE COLLECTIVE,-850.00,Purchase,Debit,Wholesale purchase - Sunny Side Collective
+2026-03-05,STRIPE PAYMENT,125.30,Fee,Debit,Stripe processing fee
+2026-03-08,GROW THERAPY LLC,-2100.75,Purchase,Debit,Wholesale purchase - Grow Therapy LLC
+2026-03-10,BANK FEE,-25.00,Fee,Debit,Monthly account maintenance fee
+2026-03-12,CANNABIS WELLNESS CO,-1450.00,Purchase,Debit,Wholesale purchase - Cannabis Wellness Co
+2026-03-15,PAYPAL TRANSFER,500.00,Transfer,Credit,Transfer from savings account
+2026-03-18,MOUNTAIN VIEW DISPENSARY,-975.25,Purchase,Debit,Wholesale purchase - Mountain View Dispensary
+2026-03-20,DEPOSIT CHECK,3200.00,Income,Deposit,Client payment - check deposit
+2026-03-22,NATURAL SELECTIONS,-1825.50,Purchase,Debit,Wholesale purchase - Natural Selections
+2026-03-25,ACCOUNTING SERVICES,-300.00,Service,Debit,Monthly bookkeeping service
+2026-03-28,DENVER WELLNESS CENTER,-650.75,Purchase,Debit,Wholesale purchase - Denver Wellness Center
+2026-03-30,INTEREST EARNED,15.32,Interest,Credit,Monthly interest earnings

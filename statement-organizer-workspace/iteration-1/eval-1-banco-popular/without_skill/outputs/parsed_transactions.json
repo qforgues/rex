@@ -1,0 +1,172 @@
+[
+  {
+    "date": "2026-03-01",
+    "description": "Saldo Inicial",
+    "reference": "",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 0.0,
+    "balance": 5000.0,
+    "transaction_type": "Balance",
+    "category": "Other"
+  },
+  {
+    "date": "2026-03-02",
+    "description": "Deposito Directa - ACME Corp",
+    "reference": "DDT-0301",
+    "deposit_amount": 2500.0,
+    "withdrawal_amount": 0.0,
+    "balance": 7500.0,
+    "transaction_type": "Direct Deposit",
+    "category": "Income"
+  },
+  {
+    "date": "2026-03-03",
+    "description": "Transferencia a Ahorros (000111)",
+    "reference": "TRF-001",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 1000.0,
+    "balance": 6500.0,
+    "transaction_type": "Transfer Out",
+    "category": "Expense"
+  },
+  {
+    "date": "2026-03-04",
+    "description": "Compra Tarjeta Debito - Supermercado",
+    "reference": "POS-001",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 150.35,
+    "balance": 6349.65,
+    "transaction_type": "Debit Card Purchase",
+    "category": "Expense"
+  },
+  {
+    "date": "2026-03-05",
+    "description": "Compra Tarjeta Debito - Gasolina",
+    "reference": "POS-002",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 45.0,
+    "balance": 6304.65,
+    "transaction_type": "Debit Card Purchase",
+    "category": "Expense"
+  },
+  {
+    "date": "2026-03-06",
+    "description": "Retiro Cajero Automatico",
+    "reference": "ATM-001",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 200.0,
+    "balance": 6104.65,
+    "transaction_type": "ATM Withdrawal",
+    "category": "Expense"
+  },
+  {
+    "date": "2026-03-07",
+    "description": "Pago Factura - Electricidad",
+    "reference": "BIL-001",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 95.5,
+    "balance": 6009.15,
+    "transaction_type": "Bill Payment",
+    "category": "Expense"
+  },
+  {
+    "date": "2026-03-08",
+    "description": "Deposito Cheque #1234",
+    "reference": "CHK-0001",
+    "deposit_amount": 500.0,
+    "withdrawal_amount": 0.0,
+    "balance": 6509.15,
+    "transaction_type": "Check Deposit",
+    "category": "Income"
+  },
+  {
+    "date": "2026-03-10",
+    "description": "Transferencia Enviada a Juan Perez",
+    "reference": "TRF-002",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 500.0,
+    "balance": 6009.15,
+    "transaction_type": "Transfer Out",
+    "category": "Expense"
+  },
+  {
+    "date": "2026-03-12",
+    "description": "Compra Online - Amazon",
+    "reference": "POS-003",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 89.99,
+    "balance": 5919.16,
+    "transaction_type": "Withdrawal",
+    "category": "Other"
+  },
+  {
+    "date": "2026-03-14",
+    "description": "Interes Crediticio",
+    "reference": "INT-001",
+    "deposit_amount": 25.5,
+    "withdrawal_amount": 0.0,
+    "balance": 5944.66,
+    "transaction_type": "Interest",
+    "category": "Income"
+  },
+  {
+    "date": "2026-03-15",
+    "description": "Comisi\u00f3n Mantenimiento de Cuenta",
+    "reference": "FEE-001",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 15.0,
+    "balance": 5929.66,
+    "transaction_type": "Fee",
+    "category": "Fee"
+  },
+  {
+    "date": "2026-03-16",
+    "description": "Deposito Directa - ACME Corp",
+    "reference": "DDT-0302",
+    "deposit_amount": 2500.0,
+    "withdrawal_amount": 0.0,
+    "balance": 8429.66,
+    "transaction_type": "Direct Deposit",
+    "category": "Income"
+  },
+  {
+    "date": "2026-03-18",
+    "description": "Pago Factura - Internet",
+    "reference": "BIL-002",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 49.99,
+    "balance": 8379.67,
+    "transaction_type": "Bill Payment",
+    "category": "Expense"
+  },
+  {
+    "date": "2026-03-20",
+    "description": "Transferencia Recibida de Ana Garcia",
+    "reference": "TRF-003",
+    "deposit_amount": 300.0,
+    "withdrawal_amount": 0.0,
+    "balance": 8679.67,
+    "transaction_type": "Transfer In",
+    "category": "Income"
+  },
+  {
+    "date": "2026-03-22",
+    "description": "Compra Tarjeta Debito - Restaurante",
+    "reference": "POS-004",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 65.25,
+    "balance": 8614.42,
+    "transaction_type": "Debit Card Purchase",
+    "category": "Expense"
+  },
+  {
+    "date": "2026-03-23",
+    "description": "Saldo Final",
+    "reference": "",
+    "deposit_amount": 0.0,
+    "withdrawal_amount": 0.0,
+    "balance": 8614.42,
+    "transaction_type": "Balance",
+    "category": "Other"
+  }
+]
