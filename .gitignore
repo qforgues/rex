@@ -1,0 +1,6 @@
+.env
+venv/
+rex.db
+.bridge/
+__pycache__/
+*.pyc
