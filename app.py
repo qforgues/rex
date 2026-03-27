@@ -50,124 +50,135 @@ if st.sidebar.button("Quit Rex", type="secondary"):
 # DASHBOARD
 # ---------------------------------------------------------------------------
 if page == "Dashboard":
-    st.title("Dashboard")
 
     data = db.get_financial_data()
     accounts = db.get_accounts()
-
-    # --- Top KPI row ---
-    col1, col2, col3, col4 = st.columns(4)
-
     db_assets = db.get_assets()
 
-    # Liquid: account balances
     liquid_assets = sum(a["balance"] for a in accounts if a["type"] not in ("Credit Card", "Loan"))
-    liquid_liab = abs(sum(a["balance"] for a in accounts if a["type"] in ("Credit Card", "Loan")))
-
-    # Physical/investment assets
-    asset_values = sum(a["value"] for a in db_assets)
-    asset_liab = sum(a["liability"] for a in db_assets)
-
-    total_assets = liquid_assets + asset_values
-    total_liabilities = liquid_liab + asset_liab
-    net_worth = total_assets - total_liabilities
+    liquid_liab   = abs(sum(a["balance"] for a in accounts if a["type"] in ("Credit Card", "Loan")))
+    asset_values  = sum(a["value"] for a in db_assets)
+    asset_liab    = sum(a["liability"] for a in db_assets)
+    total_assets  = liquid_assets + asset_values
+    total_liab    = liquid_liab + asset_liab
+    net_worth     = total_assets - total_liab
 
     income_df = data["monthly_income_expense"]
-    last_month_expenses = float(income_df["expenses"].iloc[-1]) if not income_df.empty else 0.0
+    this_month_income   = float(income_df["income"].iloc[-1])   if not income_df.empty else 0.0
+    this_month_expenses = float(income_df["expenses"].iloc[-1]) if not income_df.empty else 0.0
+    net_month = this_month_income - this_month_expenses
 
-    col1.metric("Net Worth", f"${net_worth:,.2f}")
-    col2.metric("Total Assets", f"${total_assets:,.2f}")
-    col3.metric("Total Liabilities", f"${total_liabilities:,.2f}")
-    col4.metric("Last Month Expenses", f"${last_month_expenses:,.2f}")
+    nw_color   = "#2ecc71" if net_worth >= 0 else "#e74c3c"
+    net_color  = "#2ecc71" if net_month >= 0 else "#e74c3c"
+
+    def _stat(label, value, color="#f0f0f0"):
+        return (
+            f'<div style="padding:10px 14px;border-radius:6px;background:rgba(255,255,255,0.04);'
+            f'border:1px solid rgba(255,255,255,0.08);min-width:0">'
+            f'<div style="font-size:0.68rem;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">{label}</div>'
+            f'<div style="font-size:1.05rem;font-weight:600;color:{color};white-space:nowrap">{value}</div>'
+            f'</div>'
+        )
+
+    kpis = "".join([
+        _stat("Net Worth",        f"${net_worth:,.0f}",          nw_color),
+        _stat("Total Assets",     f"${total_assets:,.0f}",        "#f0f0f0"),
+        _stat("Liabilities",      f"${total_liab:,.0f}",          "#e74c3c" if total_liab else "#f0f0f0"),
+        _stat("This Month In",    f"${this_month_income:,.0f}",   "#2ecc71"),
+        _stat("This Month Out",   f"${this_month_expenses:,.0f}", "#e74c3c"),
+        _stat("Net This Month",   f"${net_month:+,.0f}",          net_color),
+    ])
+    st.markdown(
+        f'<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px">{kpis}</div>',
+        unsafe_allow_html=True,
+    )
 
     st.divider()
 
-    # --- Income vs Expenses (full width, interactive) ---
-    st.subheader("Income vs Expenses by Month")
-    if not income_df.empty:
-        fig = go.Figure()
-        fig.add_bar(
-            x=income_df["month"], y=income_df["income"],
-            name="Income", marker_color="#2ecc71",
-            hovertemplate="<b>%{x}</b><br>Income: $%{y:,.2f}<extra></extra>",
-        )
-        fig.add_bar(
-            x=income_df["month"], y=income_df["expenses"],
-            name="Expenses", marker_color="#e74c3c",
-            hovertemplate="<b>%{x}</b><br>Expenses: $%{y:,.2f}<extra></extra>",
-        )
-        fig.update_layout(
-            barmode="group",
-            hovermode="x unified",
-            margin=dict(t=30, b=30),
-            xaxis_title="Month",
-            yaxis_title="Amount ($)",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("No transaction data yet — import a CSV to populate charts.")
+    # --- Row 1: Income vs Expenses | Category donut ---
+    ch1, ch2 = st.columns([3, 2])
 
-    # --- Spending by Category + Net Worth (side by side) ---
-    c1, c2 = st.columns(2)
+    with ch1:
+        st.caption("INCOME VS EXPENSES")
+        if not income_df.empty:
+            fig = go.Figure()
+            fig.add_bar(x=income_df["month"], y=income_df["income"],
+                        name="In", marker_color="#2ecc71",
+                        hovertemplate="<b>%{x}</b><br>In: $%{y:,.0f}<extra></extra>")
+            fig.add_bar(x=income_df["month"], y=income_df["expenses"],
+                        name="Out", marker_color="#e74c3c",
+                        hovertemplate="<b>%{x}</b><br>Out: $%{y:,.0f}<extra></extra>")
+            fig.update_layout(
+                barmode="group", hovermode="x unified", height=260,
+                margin=dict(t=10, b=30, l=40, r=10),
+                legend=dict(orientation="h", y=1.08, x=1, xanchor="right"),
+                yaxis=dict(tickprefix="$", tickformat=",.0f"),
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Import transactions to populate charts.")
 
-    with c1:
-        st.subheader("Spending by Category")
+    with ch2:
+        st.caption("SPENDING BY CATEGORY")
         cat_df = data["category_totals"]
         if not cat_df.empty:
-            fig = px.pie(
-                cat_df, names="category", values="total", hole=0.45,
-                color_discrete_sequence=px.colors.qualitative.Set3,
-            )
+            fig = px.pie(cat_df, names="category", values="total", hole=0.5,
+                         color_discrete_sequence=px.colors.qualitative.Set3)
             fig.update_traces(
-                textposition="inside", textinfo="percent+label",
-                hovertemplate="<b>%{label}</b><br>$%{value:,.2f}<br>%{percent}<extra></extra>",
+                textposition="inside", textinfo="percent",
+                hovertemplate="<b>%{label}</b><br>$%{value:,.0f} · %{percent}<extra></extra>",
             )
-            fig.update_layout(margin=dict(t=30, b=30), showlegend=False)
+            fig.update_layout(
+                height=260, margin=dict(t=10, b=10, l=10, r=10),
+                showlegend=True,
+                legend=dict(font=dict(size=10), orientation="v", x=1.02),
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+            )
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No spending data yet.")
 
-    with c2:
-        st.subheader("Net Worth Over Time")
+    # --- Row 2: Net Worth trend | Account balances table ---
+    ch3, ch4 = st.columns([3, 2])
+
+    with ch3:
+        st.caption("NET WORTH OVER TIME")
         nw_df = data["net_worth_history"]
         if not nw_df.empty:
-            fig = px.line(
-                nw_df, x="snapshot_date", y="net_worth",
-                markers=True, color_discrete_sequence=["#3498db"],
-            )
+            fig = px.area(nw_df, x="snapshot_date", y="net_worth",
+                          color_discrete_sequence=["#3498db"])
             fig.update_traces(
-                hovertemplate="<b>%{x}</b><br>Net Worth: $%{y:,.2f}<extra></extra>",
-                line=dict(width=2),
+                hovertemplate="<b>%{x}</b><br>$%{y:,.0f}<extra></extra>",
+                line=dict(width=2), fillcolor="rgba(52,152,219,0.15)",
             )
             fig.update_layout(
-                margin=dict(t=30, b=30),
-                xaxis_title="Date",
-                yaxis_title="Net Worth ($)",
+                height=220, margin=dict(t=10, b=30, l=40, r=10),
+                xaxis_title="", yaxis=dict(tickprefix="$", tickformat=",.0f"),
                 hovermode="x unified",
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             )
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No net worth history yet.")
 
-    # --- Account Balances ---
-    st.subheader("Account Balances")
-    acct_df = data["account_balances"]
-    if not acct_df.empty:
-        fig = px.bar(
-            acct_df, x="name", y="balance", color="type",
-            color_discrete_sequence=px.colors.qualitative.Pastel,
-            text_auto=".2s",
-        )
-        fig.update_traces(hovertemplate="<b>%{x}</b><br>$%{y:,.2f}<extra></extra>")
-        fig.update_layout(
-            margin=dict(t=30, b=30),
-            xaxis_title="", yaxis_title="Balance ($)",
-            showlegend=True,
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("No accounts yet.")
+    with ch4:
+        st.caption("ACCOUNTS")
+        acct_df = data["account_balances"]
+        if not acct_df.empty:
+            for _, row in acct_df.iterrows():
+                bal = row["balance"]
+                color = "#e74c3c" if row["type"] in ("Credit Card", "Loan") and bal > 0 else "#2ecc71"
+                st.markdown(
+                    f'<div style="display:flex;justify-content:space-between;align-items:center;'
+                    f'padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.85rem">'
+                    f'<span style="color:#ccc">{row["name"]} <span style="color:#666;font-size:0.75rem">· {row["type"]}</span></span>'
+                    f'<span style="font-weight:600;color:{color}">${bal:,.0f}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+        else:
+            st.info("No accounts yet.")
 
 # ---------------------------------------------------------------------------
 # ACCOUNTS
