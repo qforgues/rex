@@ -4,7 +4,8 @@ from datetime import datetime
 from typing import Optional
 import pandas as pd
 
-DB_PATH = os.environ.get("REX_DB_PATH", "rex.db")
+_HERE = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.environ.get("REX_DB_PATH", os.path.join(_HERE, "rex.db"))
 
 
 def get_connection() -> sqlite3.Connection:
