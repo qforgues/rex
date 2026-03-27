@@ -637,19 +637,26 @@ elif page == "Transactions":
                     finally:
                         os.unlink(tmp_path)
 
-                if "csv_df" in st.session_state and not st.session_state.get("csv_imported"):
+                # Show persistent success message after import
+                if st.session_state.get("import_success_msg"):
+                    st.success(st.session_state.pop("import_success_msg"))
+
+                if "csv_df" in st.session_state:
                     parsed_df = st.session_state["csv_df"]
                     acct_id = st.session_state["csv_acct_id"]
 
-                    # Pre-compute hashes to detect duplicates needing review
                     all_hashes = [
                         hashlib.md5(f"{acct_id}|{row['date']}|{row['description']}|{row['amount']}".encode()).hexdigest()
                         for _, row in parsed_df.iterrows()
                     ]
-                    needs_review_hashes = set()
 
-                    # Show statement summary
+                    # Top row: summary label + button on the right
                     stmt_meta = st.session_state.get("stmt_meta")
+                    th1, th2 = st.columns([4, 1])
+                    th1.markdown(f"**{len(parsed_df)} transactions** ready to import")
+                    do_import = th2.button("Categorize & Import", type="primary", use_container_width=True)
+
+                    # Statement summary metrics
                     if stmt_meta:
                         m = stmt_meta
                         sc1, sc2, sc3, sc4 = st.columns(4)
@@ -659,15 +666,13 @@ elif page == "Transactions":
                         sc4.metric("Closing Balance", f"${m['closing_balance']:,.2f}")
                         st.caption(f"Statement period: {m['opening_date']} → {m['closing_date']}")
 
-                    st.write(f"Preview — {len(parsed_df)} transactions:")
                     st.dataframe(parsed_df.head(10), use_container_width=True, hide_index=True)
 
-                    if st.button("Categorize & Import"):
+                    if do_import:
                         with st.spinner("Categorizing and naming transactions with AI..."):
                             categorized_df = parsers.categorize_transactions(parsed_df.copy())
                             descriptions = categorized_df["description"].astype(str).tolist()
 
-                            # Use saved rules where available, AI for the rest
                             merchant_names = []
                             need_ai_descs, need_ai_idx = [], []
                             for i, desc in enumerate(descriptions):
@@ -683,15 +688,13 @@ elif page == "Transactions":
                                 for idx, name in zip(need_ai_idx, ai_names):
                                     merchant_names[idx] = name
 
-                        # Save statement first so we have its ID to link transactions
                         stmt_id = None
-                        if st.session_state.get("stmt_meta"):
-                            m = st.session_state["stmt_meta"]
+                        if stmt_meta:
                             stmt_id = db.insert_statement(
                                 acct_id,
-                                m["opening_date"], m["closing_date"],
-                                m["opening_balance"], m["closing_balance"],
-                                m["total_charges"], m["total_credits"],
+                                stmt_meta["opening_date"], stmt_meta["closing_date"],
+                                stmt_meta["opening_balance"], stmt_meta["closing_balance"],
+                                stmt_meta["total_charges"], stmt_meta["total_credits"],
                             )
 
                         inserted = linked = 0
@@ -711,13 +714,12 @@ elif page == "Transactions":
                         msg = f"✅ Imported {inserted} transactions."
                         if linked:
                             msg += f" ({linked} already existed — linked to statement)"
-                        st.success(msg)
-                        st.session_state["csv_imported"] = True
 
-            if st.session_state.get("csv_imported"):
-                for k in ["csv_file_key", "csv_df", "csv_acct_id", "csv_imported", "stmt_meta"]:
-                    st.session_state.pop(k, None)
-                st.rerun()
+                        # Store message to survive rerun, then clear import state
+                        st.session_state["import_success_msg"] = msg
+                        for k in ["csv_file_key", "csv_df", "csv_acct_id", "stmt_meta"]:
+                            st.session_state.pop(k, None)
+                        st.rerun()
 
     if dev_mode and tab5:
         with tab5:
