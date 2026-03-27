@@ -119,7 +119,7 @@ def enrich_transactions(descriptions: List[str]) -> List[dict]:
 
     for batch_start in range(0, len(descriptions), _BATCH_SIZE):
         batch = descriptions[batch_start: batch_start + _BATCH_SIZE]
-        payload = json.dumps(batch, ensure_ascii=False)
+        payload = json.dumps(batch, ensure_ascii=True)
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=2048,

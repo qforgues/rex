@@ -797,6 +797,20 @@ elif page == "Transactions":
                         st.success(f"Deleted — {count} transactions removed.")
                         st.rerun()
 
+            # Orphaned transactions (no linked statement — e.g. imported before statements were tracked)
+            orphan_counts = db.get_orphaned_transaction_counts()
+            if orphan_counts:
+                st.divider()
+                st.caption("Untracked transactions (imported before statement logging was added)")
+                for acct_id, acct_name, count in orphan_counts:
+                    oc1, oc2 = st.columns([10, 2])
+                    oc1.markdown(f"**{acct_name}** — {count} transactions with no import record")
+                    if oc2.button("Clear", key=f"clear_orphan_{acct_id}"):
+                        db.delete_orphaned_transactions(acct_id)
+                        db.save_net_worth_snapshot()
+                        st.success(f"Cleared {count} orphaned transactions from {acct_name}.")
+                        st.rerun()
+
 # ---------------------------------------------------------------------------
 # GOALS
 # ---------------------------------------------------------------------------

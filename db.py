@@ -279,6 +279,34 @@ def get_all_imports() -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def get_orphaned_transaction_counts() -> list[tuple]:
+    """Return (account_id, account_name, count) for accounts with unlinked transactions."""
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT t.account_id, a.name, COUNT(*) AS cnt
+        FROM transactions t
+        JOIN accounts a ON a.id = t.account_id
+        WHERE t.statement_id IS NULL
+        GROUP BY t.account_id
+        ORDER BY a.name
+    """).fetchall()
+    conn.close()
+    return [(r[0], r[1], r[2]) for r in rows]
+
+
+def delete_orphaned_transactions(account_id: int) -> int:
+    """Delete all transactions with no statement_id for a given account. Returns count deleted."""
+    conn = get_connection()
+    conn.execute(
+        "DELETE FROM transactions WHERE account_id=? AND statement_id IS NULL",
+        (account_id,),
+    )
+    count = conn.execute("SELECT changes()").fetchone()[0]
+    conn.commit()
+    conn.close()
+    return count
+
+
 def delete_account(account_id: int) -> None:
     conn = get_connection()
     conn.execute("DELETE FROM accounts WHERE id=?", (account_id,))
