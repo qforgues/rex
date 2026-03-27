@@ -67,9 +67,14 @@ if dev_mode:
         st.rerun()
 
 if dev_mode and st.session_state.get("dev_log"):
-    with st.sidebar.expander(f"📋 Error Log ({len(st.session_state['dev_log'])} entries)", expanded=False):
-        log_text = "\n".join(st.session_state["dev_log"])
-        st.code(log_text, language=None)
+    log_text = "\n".join(st.session_state["dev_log"])
+    st.sidebar.caption(f"📋 Log — {len(st.session_state['dev_log'])} entries")
+    _lc1, _lc2 = st.sidebar.columns(2)
+    _lc1.download_button("Copy Log", data=log_text, file_name="rex_log.txt", mime="text/plain", use_container_width=True)
+    if _lc2.button("View Log", use_container_width=True):
+        st.session_state["show_dev_log"] = not st.session_state.get("show_dev_log", False)
+    if st.session_state.get("show_dev_log"):
+        st.sidebar.code(log_text, language=None)
 
 st.sidebar.divider()
 if st.sidebar.button("Quit Rex"):
@@ -614,8 +619,18 @@ elif page == "Transactions":
         else:
             import tempfile, os, hashlib
 
+            # Success message lives outside the uploader block so it survives widget reset
+            if st.session_state.get("import_success_msg"):
+                st.success(st.session_state.pop("import_success_msg"))
+
             acct_name = st.selectbox("Import into Account", [a["name"] for a in accounts])
-            uploaded = st.file_uploader("Upload CSV or Chase PDF", type=["csv", "pdf"])
+
+            if "uploader_key" not in st.session_state:
+                st.session_state["uploader_key"] = 0
+            uploaded = st.file_uploader(
+                "Upload CSV or Chase PDF", type=["csv", "pdf"],
+                key=f"uploader_{st.session_state['uploader_key']}",
+            )
 
             if uploaded:
                 file_key = f"csv_{uploaded.name}_{uploaded.size}"
@@ -655,10 +670,6 @@ elif page == "Transactions":
                         st.session_state.pop("csv_df", None)
                     finally:
                         os.unlink(tmp_path)
-
-                # Show persistent success message after import
-                if st.session_state.get("import_success_msg"):
-                    st.success(st.session_state.pop("import_success_msg"))
 
                 if "csv_df" in st.session_state:
                     parsed_df = st.session_state["csv_df"]
@@ -776,6 +787,7 @@ elif page == "Transactions":
                             st.session_state["import_success_msg"] = msg
                             for k in ["csv_file_key", "csv_df", "csv_acct_id", "stmt_meta"]:
                                 st.session_state.pop(k, None)
+                            st.session_state["uploader_key"] = st.session_state.get("uploader_key", 0) + 1
                             st.rerun()
 
                         except Exception as exc:
