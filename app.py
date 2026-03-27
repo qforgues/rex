@@ -664,7 +664,7 @@ elif page == "Transactions":
                             unsafe_allow_html=True,
                         )
                     with hcol2:
-                        do_import = st.button("Categorize & Import ▶", type="primary", use_container_width=True)
+                        do_import = st.button("⚡ Begin Import", use_container_width=True)
 
                     # ── Statement summary bar ───────────────────────────────
                     if stmt_meta:
