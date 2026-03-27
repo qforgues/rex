@@ -211,6 +211,17 @@ def get_account_statements(account_id: int) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def get_latest_statement_closing_balance(account_id: int) -> float:
+    """Return the closing balance of the most recent statement, or 0.0 if none."""
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT closing_balance FROM statements WHERE account_id=? ORDER BY closing_date DESC LIMIT 1",
+        (account_id,),
+    ).fetchone()
+    conn.close()
+    return float(row["closing_balance"]) if row else 0.0
+
+
 def delete_account(account_id: int) -> None:
     conn = get_connection()
     conn.execute("DELETE FROM accounts WHERE id=?", (account_id,))

@@ -561,10 +561,22 @@ elif page == "Transactions":
                         acct_id = account_map[acct_name]
                         if is_pdf:
                             parsed_df, stmt_meta = parsers.parse_chase_pdf(tmp_path, acct_id)
-                            st.session_state["stmt_meta"] = stmt_meta
                         else:
                             parsed_df = parsers.parse_csv(tmp_path, acct_id)
-                            st.session_state.pop("stmt_meta", None)
+                            # Build statement metadata from the transaction data
+                            opening_balance = db.get_latest_statement_closing_balance(acct_id)
+                            total_credits = float(parsed_df[parsed_df["amount"] > 0]["amount"].sum())
+                            total_charges = float(parsed_df[parsed_df["amount"] < 0]["amount"].abs().sum())
+                            closing_balance = opening_balance + total_credits - total_charges
+                            stmt_meta = {
+                                "opening_date": str(parsed_df["date"].min()),
+                                "closing_date": str(parsed_df["date"].max()),
+                                "opening_balance": opening_balance,
+                                "closing_balance": closing_balance,
+                                "total_charges": total_charges,
+                                "total_credits": total_credits,
+                            }
+                        st.session_state["stmt_meta"] = stmt_meta
                         st.session_state["csv_file_key"] = file_key
                         st.session_state["csv_df"] = parsed_df
                         st.session_state["csv_acct_id"] = acct_id
@@ -591,7 +603,7 @@ elif page == "Transactions":
                     if needs_review:
                         st.warning(f"⚠️ {len(needs_review)} already imported — will be skipped.")
 
-                    # Show statement summary for PDFs
+                    # Show statement summary
                     stmt_meta = st.session_state.get("stmt_meta")
                     if stmt_meta:
                         m = stmt_meta
@@ -641,7 +653,7 @@ elif page == "Transactions":
                             else:
                                 skipped += 1
 
-                        # Save statement metadata (PDF only)
+                        # Save statement metadata
                         if st.session_state.get("stmt_meta"):
                             m = st.session_state["stmt_meta"]
                             db.insert_statement(
@@ -781,7 +793,22 @@ elif page == "Chat with Rex":
         total_assets = sum(a["balance"] for a in accounts if a["type"] not in ("Credit Card", "Loan"))
         total_liab = abs(sum(a["balance"] for a in accounts if a["type"] in ("Credit Card", "Loan")))
         context_parts.append(f"Net worth: ${total_assets - total_liab:,.2f} (assets ${total_assets:,.2f}, liabilities ${total_liab:,.2f})")
-        context_parts.append("Accounts: " + ", ".join(f"{a['name']} ({a['type']}) ${a['balance']:,.2f}" for a in accounts))
+        context_parts.append("Accounts: " + ", ".join(
+            f"{a['name']} ({a['type']}, {a.get('scope','Personal')}) balance=${a['balance']:,.2f}" for a in accounts
+        ))
+        # Statement history per account
+        stmt_lines = []
+        for a in accounts:
+            stmts = db.get_account_statements(a["id"])
+            for s in stmts:
+                net = s["total_credits"] - s["total_charges"]
+                stmt_lines.append(
+                    f"{a['name']} {s['opening_date']}→{s['closing_date']}: "
+                    f"opening=${s['opening_balance']:,.2f} charges=${s['total_charges']:,.2f} "
+                    f"credits=${s['total_credits']:,.2f} closing=${s['closing_balance']:,.2f} net={net:+,.2f}"
+                )
+        if stmt_lines:
+            context_parts.append("Statement history:\n" + "\n".join(stmt_lines))
     if txns:
         recent = txns[:10]
         context_parts.append("Recent transactions: " + "; ".join(f"{t['date']} {t['description']} ${t['amount']}" for t in recent))
