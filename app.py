@@ -215,6 +215,21 @@ elif page == "Accounts":
                     if cd.form_submit_button("Delete", type="secondary", use_container_width=True):
                         db.delete_account(acct["id"])
                         st.rerun()
+
+                statements = db.get_account_statements(acct["id"])
+                if statements:
+                    st.caption("Statement History")
+                    stmt_rows = []
+                    for s in statements:
+                        stmt_rows.append({
+                            "Period": f"{s['opening_date']} → {s['closing_date']}",
+                            "Opening": f"${s['opening_balance']:,.2f}",
+                            "Charges": f"${s['total_charges']:,.2f}",
+                            "Payments": f"${s['total_credits']:,.2f}",
+                            "Closing": f"${s['closing_balance']:,.2f}",
+                            "Movement": f"${s['total_charges'] - s['total_credits']:+,.2f}",
+                        })
+                    st.dataframe(stmt_rows, use_container_width=True, hide_index=True)
     else:
         st.info("No accounts yet. Add one above.")
 
@@ -545,9 +560,11 @@ elif page == "Transactions":
                     try:
                         acct_id = account_map[acct_name]
                         if is_pdf:
-                            parsed_df = parsers.parse_chase_pdf(tmp_path, acct_id)
+                            parsed_df, stmt_meta = parsers.parse_chase_pdf(tmp_path, acct_id)
+                            st.session_state["stmt_meta"] = stmt_meta
                         else:
                             parsed_df = parsers.parse_csv(tmp_path, acct_id)
+                            st.session_state.pop("stmt_meta", None)
                         st.session_state["csv_file_key"] = file_key
                         st.session_state["csv_df"] = parsed_df
                         st.session_state["csv_acct_id"] = acct_id
@@ -572,9 +589,20 @@ elif page == "Transactions":
                     needs_review_hashes = {r["source_hash"] for r in needs_review}
 
                     if needs_review:
-                        st.warning(f"⚠️ {len(needs_review)} transaction(s) from this file already exist but still need a category or name. They'll appear in the review step.")
+                        st.warning(f"⚠️ {len(needs_review)} already imported — will be skipped.")
 
-                    st.write(f"Preview — {len(parsed_df)} rows:")
+                    # Show statement summary for PDFs
+                    stmt_meta = st.session_state.get("stmt_meta")
+                    if stmt_meta:
+                        m = stmt_meta
+                        sc1, sc2, sc3, sc4 = st.columns(4)
+                        sc1.metric("Opening Balance", f"${m['opening_balance']:,.2f}")
+                        sc2.metric("Charges", f"${m['total_charges']:,.2f}")
+                        sc3.metric("Payments", f"${m['total_credits']:,.2f}")
+                        sc4.metric("Closing Balance", f"${m['closing_balance']:,.2f}")
+                        st.caption(f"Statement period: {m['opening_date']} → {m['closing_date']}")
+
+                    st.write(f"Preview — {len(parsed_df)} transactions:")
                     st.dataframe(parsed_df.head(10), use_container_width=True, hide_index=True)
 
                     if st.button("Categorize & Import"):
@@ -613,6 +641,17 @@ elif page == "Transactions":
                             else:
                                 skipped += 1
 
+                        # Save statement metadata (PDF only)
+                        if st.session_state.get("stmt_meta"):
+                            m = st.session_state["stmt_meta"]
+                            db.insert_statement(
+                                acct_id,
+                                m["opening_date"], m["closing_date"],
+                                m["opening_balance"], m["closing_balance"],
+                                m["total_charges"], m["total_credits"],
+                            )
+
+                        db.save_net_worth_snapshot()
                         msg = f"✅ Imported {inserted} transactions."
                         if skipped:
                             msg += f" ({skipped} skipped — already exist)"
@@ -624,6 +663,7 @@ elif page == "Transactions":
                 st.session_state.pop("csv_df", None)
                 st.session_state.pop("csv_acct_id", None)
                 st.session_state.pop("csv_imported", None)
+                st.session_state.pop("stmt_meta", None)
 
 # ---------------------------------------------------------------------------
 # GOALS

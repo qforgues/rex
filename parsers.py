@@ -253,12 +253,28 @@ def _normalise_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df.rename(columns=rename_map)
 
 
-def parse_chase_pdf(filepath: str, account_id: int) -> pd.DataFrame:
-    """
-    Parse a Chase credit card PDF statement into a normalised DataFrame.
+def _parse_dollar(text: str, pattern: str) -> Optional[float]:
+    """Extract a dollar amount from text using a regex pattern with one capture group."""
+    m = re.search(pattern, text, re.IGNORECASE)
+    if not m:
+        return None
+    raw = m.group(1).replace(",", "").replace("$", "").replace("+", "").strip()
+    try:
+        return float(raw)
+    except ValueError:
+        return None
 
-    Returns a DataFrame with columns: date, description, amount, account_id.
-    Amounts are signed: negative = payment/credit, positive = charge.
+
+def parse_chase_pdf(filepath: str, account_id: int) -> tuple:
+    """
+    Parse a Chase credit card PDF statement.
+
+    Returns:
+        (df, meta) where df has columns [date, description, amount, account_id]
+        and meta is a dict with keys:
+            opening_date, closing_date,
+            opening_balance, closing_balance,
+            total_charges, total_credits
     """
     try:
         import pdfplumber
@@ -270,71 +286,81 @@ def parse_chase_pdf(filepath: str, account_id: int) -> pd.DataFrame:
     except Exception as exc:
         raise ValueError(f"Could not open PDF: {exc}") from exc
 
-    # Extract all text across pages
     full_text = ""
     with pdf:
         for page in pdf.pages:
-            text = page.extract_text() or ""
-            full_text += text + "\n"
+            full_text += (page.extract_text() or "") + "\n"
 
-    # Detect statement year from "Opening/Closing Date MM/DD/YY - MM/DD/YY"
-    year_match = re.search(r"Opening/Closing Date\s+\d{2}/\d{2}/(\d{2,4})", full_text, re.IGNORECASE)
-    if year_match:
-        yr = year_match.group(1)
-        stmt_year = int(yr) if len(yr) == 4 else 2000 + int(yr)
+    # --- Statement dates ---
+    date_match = re.search(
+        r"Opening/Closing Date\s+(\d{2}/\d{2}/\d{2,4})\s*-\s*(\d{2}/\d{2}/\d{2,4})",
+        full_text, re.IGNORECASE
+    )
+
+    def _to_iso(mmddyy: str) -> str:
+        parts = mmddyy.split("/")
+        mm, dd, yy = parts
+        year = int(yy) if len(yy) == 4 else 2000 + int(yy)
+        return f"{year}-{mm}-{dd}"
+
+    if date_match:
+        opening_date = _to_iso(date_match.group(1))
+        closing_date = _to_iso(date_match.group(2))
+        stmt_year = int(closing_date[:4])
+        closing_month = int(closing_date[5:7])
     else:
+        opening_date = closing_date = datetime.now().strftime("%Y-%m-%d")
         stmt_year = datetime.now().year
+        closing_month = datetime.now().month
 
-    # Find the ACCOUNT ACTIVITY section (Chase PDFs may double every character in headers)
+    # --- Statement summary balances ---
+    opening_balance = _parse_dollar(full_text, r"Previous Balance\s+\$?([\d,]+\.\d{2})")
+    closing_balance = _parse_dollar(full_text, r"New Balance\s+\$?([\d,]+\.\d{2})")
+    total_credits_raw = _parse_dollar(full_text, r"Payment[s]?,?\s*Credits?\s+(-?[\$\d,]+\.\d{2})")
+    total_charges_raw = _parse_dollar(full_text, r"Purchases\s+\+?\$?([\d,]+\.\d{2})")
+
+    meta = {
+        "opening_date": opening_date,
+        "closing_date": closing_date,
+        "opening_balance": opening_balance or 0.0,
+        "closing_balance": closing_balance or 0.0,
+        "total_charges": total_charges_raw or 0.0,
+        "total_credits": abs(total_credits_raw) if total_credits_raw else 0.0,
+    }
+
+    # --- Transactions ---
     activity_match = re.search(r"A+C+O+U+N+T+\s+A+C+T+I+V+I+T+Y+", full_text, re.IGNORECASE)
     if not activity_match:
         raise ValueError("Could not find ACCOUNT ACTIVITY section in the PDF.")
 
     activity_text = full_text[activity_match.end():]
-
-    # Stop when we hit summary/totals lines that follow the transaction list
     stop_match = re.search(
         r"(TRANSACTIONS THIS CYCLE|Year-to-Date|INTEREST CHARGES\n|IINNTTEERREESSTT|YEAR-TO-DATE TOTALS)",
-        activity_text, re.IGNORECASE
+        activity_text, re.IGNORECASE,
     )
     if stop_match:
         activity_text = activity_text[: stop_match.start()]
 
-    # Match transaction lines: MM/DD <description> <amount>
-    # Amount may be negative (payments) e.g. -5,000.00 or positive 22.26 or .66
-    txn_re = re.compile(
-        r"^(\d{2}/\d{2})\s+(.+?)\s+(-?[\d,]*\.\d{2})\s*$",
-        re.MULTILINE,
-    )
-
-    # Determine closing month for year-rollover detection (e.g. Jan statement has Dec txns)
-    closing_month_match = re.search(r"Opening/Closing Date\s+\d{2}/\d{2}/\d{2,4}\s*-\s*(\d{2})/", full_text, re.IGNORECASE)
-    closing_month = int(closing_month_match.group(1)) if closing_month_match else 12
+    txn_re = re.compile(r"^(\d{2}/\d{2})\s+(.+?)\s+(-?[\d,]*\.\d{2})\s*$", re.MULTILINE)
 
     rows = []
     for m in txn_re.finditer(activity_text):
-        date_str = m.group(1)   # MM/DD
+        date_str = m.group(1)
         desc = m.group(2).strip()
         amt_str = m.group(3).replace(",", "")
-
-        # If transaction month is after the closing month, it's from the prior year
         mm = int(date_str.split("/")[0])
         year = stmt_year if mm <= closing_month else stmt_year - 1
-
         full_date = f"{year}-{date_str.replace('/', '-')}"
         try:
             full_date = pd.to_datetime(full_date, format="%Y-%m-%d").strftime("%Y-%m-%d")
         except Exception:
             pass
-
-        amount = float(amt_str)
-        rows.append({"date": full_date, "description": desc, "amount": amount, "account_id": account_id})
+        rows.append({"date": full_date, "description": desc, "amount": float(amt_str), "account_id": account_id})
 
     if not rows:
         raise ValueError("No transactions found in the PDF. The statement format may not be supported.")
 
-    df = pd.DataFrame(rows)
-    return df
+    return pd.DataFrame(rows), meta
 
 
 def parse_csv(filepath: str, account_id: int) -> pd.DataFrame:

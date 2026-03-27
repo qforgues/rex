@@ -31,6 +31,18 @@ def init_db() -> None:
             created_at  TEXT    DEFAULT (datetime('now'))
         );
 
+        CREATE TABLE IF NOT EXISTS statements (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id       INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
+            opening_date     TEXT NOT NULL,
+            closing_date     TEXT NOT NULL,
+            opening_balance  REAL DEFAULT 0.0,
+            closing_balance  REAL DEFAULT 0.0,
+            total_charges    REAL DEFAULT 0.0,
+            total_credits    REAL DEFAULT 0.0,
+            created_at       TEXT DEFAULT (datetime('now'))
+        );
+
         CREATE TABLE IF NOT EXISTS transactions (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             account_id      INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
@@ -135,14 +147,16 @@ def init_db() -> None:
 # ---------------------------------------------------------------------------
 
 def get_accounts() -> list[dict]:
-    """Return accounts with balance computed from imported transactions."""
+    """Return accounts; balance = closing balance of most recent statement."""
     conn = get_connection()
     rows = conn.execute("""
-        SELECT a.id, a.name, a.type, a.institution, a.currency, a.created_at,
-               ROUND(COALESCE(SUM(t.amount), 0), 2) AS balance
+        SELECT a.id, a.name, a.type, a.institution, a.currency, a.scope, a.created_at,
+               COALESCE(
+                   (SELECT s.closing_balance FROM statements s
+                    WHERE s.account_id = a.id ORDER BY s.closing_date DESC LIMIT 1),
+                   0.0
+               ) AS balance
         FROM accounts a
-        LEFT JOIN transactions t ON t.account_id = a.id
-        GROUP BY a.id
         ORDER BY a.name
     """).fetchall()
     conn.close()
@@ -169,6 +183,32 @@ def update_account(account_id: int, name: str, acct_type: str, institution: str,
     )
     conn.commit()
     conn.close()
+
+
+def insert_statement(account_id: int, opening_date: str, closing_date: str,
+                     opening_balance: float, closing_balance: float,
+                     total_charges: float, total_credits: float) -> None:
+    """Record a statement import. Replaces any existing statement for the same closing date."""
+    conn = get_connection()
+    conn.execute(
+        "INSERT OR REPLACE INTO statements "
+        "(account_id, opening_date, closing_date, opening_balance, closing_balance, total_charges, total_credits) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (account_id, opening_date, closing_date, opening_balance, closing_balance, total_charges, total_credits),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_account_statements(account_id: int) -> list[dict]:
+    """Return all statements for an account, newest first."""
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT * FROM statements WHERE account_id=? ORDER BY closing_date DESC",
+        (account_id,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 
 def delete_account(account_id: int) -> None:
@@ -246,12 +286,15 @@ def save_net_worth_snapshot() -> None:
     """Calculate current net worth from accounts + assets and save a snapshot."""
     conn = get_connection()
 
-    # Liquid accounts — balance computed from transactions
+    # Liquid accounts — balance from most recent statement
     acct_rows = conn.execute("""
-        SELECT a.type, ROUND(COALESCE(SUM(t.amount), 0), 2) AS balance
+        SELECT a.type,
+               COALESCE(
+                   (SELECT s.closing_balance FROM statements s
+                    WHERE s.account_id = a.id ORDER BY s.closing_date DESC LIMIT 1),
+                   0.0
+               ) AS balance
         FROM accounts a
-        LEFT JOIN transactions t ON t.account_id = a.id
-        GROUP BY a.id
     """).fetchall()
     liquid_assets = sum(r["balance"] for r in acct_rows if r["type"] not in ("Credit Card", "Loan"))
     liquid_liabilities = abs(sum(r["balance"] for r in acct_rows if r["type"] in ("Credit Card", "Loan")))
@@ -608,12 +651,15 @@ def get_financial_data() -> dict:
     """
     income_expense_df = pd.read_sql_query(income_expense_query, conn)
 
-    # --- Account balances (computed from transactions) ---
+    # --- Account balances (from most recent statement) ---
     account_query = """
-        SELECT a.name, a.type, ROUND(COALESCE(SUM(t.amount), 0), 2) AS balance
+        SELECT a.name, a.type,
+               COALESCE(
+                   (SELECT s.closing_balance FROM statements s
+                    WHERE s.account_id = a.id ORDER BY s.closing_date DESC LIMIT 1),
+                   0.0
+               ) AS balance
         FROM accounts a
-        LEFT JOIN transactions t ON t.account_id = a.id
-        GROUP BY a.id
         ORDER BY balance DESC
     """
     account_df = pd.read_sql_query(account_query, conn)
