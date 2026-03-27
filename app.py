@@ -636,18 +636,34 @@ elif page == "Transactions":
                 needs_review = {d: v for d, v in seen.items() if not v["has_rule"]}
                 auto_names   = {d: v for d, v in seen.items() if  v["has_rule"]}
 
-                st.markdown(f"**Review {inserted} imported transactions** — confirm or edit names below, then they'll auto-apply next time.")
+                from parsers import normalize_description
+
+                rh1, rh2 = st.columns([3, 1])
+                rh1.markdown(f"**Review {inserted} imported transactions** — edit any names, then confirm all.")
+
+                def _confirm_all():
+                    for desc, info in needs_review.items():
+                        edited = st.session_state.get(f"rev_{desc}", info["merchant_name"])
+                        name = (edited.strip() if edited else "") or info["merchant_name"]
+                        db.add_merchant_rule(normalize_description(desc), name)
+                        db.bulk_update_merchant_name(desc, name)
+                    db.save_net_worth_snapshot()
+                    st.session_state["review_all_confirmed"] = True
 
                 if needs_review:
-                    st.caption(f"{len(needs_review)} AI-guessed names need confirmation")
+                    if rh2.button("Confirm All ✓", use_container_width=True):
+                        _confirm_all()
+                        st.rerun()
+                    st.caption(f"{len(needs_review)} AI-guessed names — edit if needed, then hit Confirm All")
                     for desc, info in needs_review.items():
                         rc1, rc2, rc3 = st.columns([3, 3, 1])
                         rc1.markdown(f"<small style='color:#888'>{desc[:55]}</small>", unsafe_allow_html=True)
-                        new_name = rc2.text_input("", value=info["merchant_name"], key=f"rev_{desc}", label_visibility="collapsed")
-                        if rc3.button("✓", key=f"conf_{desc}", help="Confirm and save as rule"):
-                            from parsers import normalize_description
-                            db.add_merchant_rule(normalize_description(desc), new_name.strip() or info["merchant_name"])
-                            db.bulk_update_merchant_name(desc, new_name.strip() or info["merchant_name"])
+                        rc2.text_input("", value=info["merchant_name"], key=f"rev_{desc}", label_visibility="collapsed")
+                        if rc3.button("✓", key=f"conf_{desc}", help="Confirm this one"):
+                            edited = st.session_state.get(f"rev_{desc}", info["merchant_name"])
+                            name = (edited.strip() if edited else "") or info["merchant_name"]
+                            db.add_merchant_rule(normalize_description(desc), name)
+                            db.bulk_update_merchant_name(desc, name)
                             db.save_net_worth_snapshot()
                             st.rerun()
                 else:
