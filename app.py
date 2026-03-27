@@ -53,10 +53,11 @@ if dev_mode:
         st.sidebar.success("Data wiped.")
 
 st.sidebar.divider()
-if st.sidebar.button("Quit Rex", type="secondary"):
-    import signal, os
-    st.sidebar.success("Rex is shutting down...")
-    os.kill(os.getpid(), signal.SIGTERM)
+if st.sidebar.button("Quit Rex"):
+    import signal, os as _os
+    st.markdown("<script>window.close();</script>", unsafe_allow_html=True)
+    st.sidebar.info("Shutting down...")
+    _os.kill(_os.getpid(), signal.SIGTERM)
 
 # ---------------------------------------------------------------------------
 # DASHBOARD
@@ -593,7 +594,6 @@ elif page == "Transactions":
             st.warning("Add an account first.")
         else:
             import tempfile, os, hashlib
-            from rex import get_ai_merchant_names
 
             acct_name = st.selectbox("Import into Account", [a["name"] for a in accounts])
             uploaded = st.file_uploader("Upload CSV or Chase PDF", type=["csv", "pdf"])
@@ -687,59 +687,72 @@ elif page == "Transactions":
                             unsafe_allow_html=True,
                         )
 
-                    # ── Processing (runs ABOVE the preview so spinner is visible at top) ──
+                    # ── Processing block (above preview so spinner shows at top) ──
                     if do_import:
-                        with st.spinner("Categorizing and naming transactions with AI..."):
-                            categorized_df = parsers.categorize_transactions(parsed_df.copy())
-                            descriptions = categorized_df["description"].astype(str).tolist()
+                        try:
+                            with st.spinner("Asking AI to categorize and name transactions..."):
+                                from rex import enrich_transactions
+                                descriptions = parsed_df["description"].astype(str).tolist()
 
-                            merchant_names = []
-                            need_ai_descs, need_ai_idx = [], []
-                            for i, desc in enumerate(descriptions):
-                                matched = db.find_matching_rule(desc)
-                                if matched:
-                                    merchant_names.append(matched)
+                                # Check merchant rules first; only AI-enrich what's not covered
+                                rule_names = {}
+                                need_ai_idx = []
+                                for i, desc in enumerate(descriptions):
+                                    matched = db.find_matching_rule(desc)
+                                    if matched:
+                                        rule_names[i] = matched
+                                    else:
+                                        need_ai_idx.append(i)
+
+                                ai_results = {}
+                                if need_ai_idx:
+                                    ai_batch = [descriptions[i] for i in need_ai_idx]
+                                    enriched = enrich_transactions(ai_batch)
+                                    for list_pos, orig_idx in enumerate(need_ai_idx):
+                                        ai_results[orig_idx] = enriched[list_pos]
+
+                            stmt_id = None
+                            if stmt_meta:
+                                stmt_id = db.insert_statement(
+                                    acct_id,
+                                    stmt_meta["opening_date"], stmt_meta["closing_date"],
+                                    stmt_meta["opening_balance"], stmt_meta["closing_balance"],
+                                    stmt_meta["total_charges"], stmt_meta["total_credits"],
+                                )
+
+                            inserted = linked = 0
+                            for i, (_, row) in enumerate(parsed_df.iterrows()):
+                                src_hash = all_hashes[i]
+                                if i in rule_names:
+                                    mname = rule_names[i]
+                                    category = "Uncategorized"
                                 else:
-                                    merchant_names.append(None)
-                                    need_ai_descs.append(desc)
-                                    need_ai_idx.append(i)
-                            if need_ai_descs:
-                                ai_names = get_ai_merchant_names(need_ai_descs)
-                                for idx, name in zip(need_ai_idx, ai_names):
-                                    merchant_names[idx] = name
+                                    r = ai_results.get(i, {})
+                                    mname = r.get("name") or str(row["description"])
+                                    category = r.get("category") or "Uncategorized"
 
-                        stmt_id = None
-                        if stmt_meta:
-                            stmt_id = db.insert_statement(
-                                acct_id,
-                                stmt_meta["opening_date"], stmt_meta["closing_date"],
-                                stmt_meta["opening_balance"], stmt_meta["closing_balance"],
-                                stmt_meta["total_charges"], stmt_meta["total_credits"],
-                            )
+                                ok = db.insert_transaction(
+                                    acct_id, str(row["date"]), str(row["description"]),
+                                    float(row["amount"]), category,
+                                    source_hash=src_hash, merchant_name=mname,
+                                    statement_id=stmt_id,
+                                )
+                                if ok:
+                                    inserted += 1
+                                else:
+                                    linked += 1
 
-                        inserted = linked = 0
-                        for (_, row), src_hash, mname in zip(categorized_df.iterrows(), all_hashes, merchant_names):
-                            ok = db.insert_transaction(
-                                acct_id, str(row["date"]), str(row["description"]),
-                                float(row["amount"]), row.get("category", "Uncategorized"),
-                                source_hash=src_hash, merchant_name=mname or "",
-                                statement_id=stmt_id,
-                            )
-                            if ok:
-                                inserted += 1
-                            else:
-                                linked += 1
+                            db.save_net_worth_snapshot()
+                            msg = f"✅ Imported {inserted} transactions."
+                            if linked:
+                                msg += f" ({linked} already existed — linked to statement)"
+                            st.session_state["import_success_msg"] = msg
+                            for k in ["csv_file_key", "csv_df", "csv_acct_id", "stmt_meta"]:
+                                st.session_state.pop(k, None)
+                            st.rerun()
 
-                        db.save_net_worth_snapshot()
-                        msg = f"✅ Imported {inserted} transactions."
-                        if linked:
-                            msg += f" ({linked} already existed — linked to statement)"
-
-                        # Store message to survive rerun, then clear import state
-                        st.session_state["import_success_msg"] = msg
-                        for k in ["csv_file_key", "csv_df", "csv_acct_id", "stmt_meta"]:
-                            st.session_state.pop(k, None)
-                        st.rerun()
+                        except Exception as exc:
+                            st.error(f"Import failed: {exc}")
 
                     else:
                         # ── Preview: 3 rows, shown only when not importing ──────

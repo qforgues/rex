@@ -19,8 +19,8 @@ def init_db() -> None:
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.executescript("""
-        CREATE TABLE IF NOT EXISTS accounts (
+    ddl_statements = [
+        """CREATE TABLE IF NOT EXISTS accounts (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             name        TEXT    NOT NULL,
             type        TEXT    CHECK(type IN ('Checking','Savings','Credit Card','Investment','Loan','Other')),
@@ -29,9 +29,8 @@ def init_db() -> None:
             currency    TEXT    DEFAULT 'USD',
             scope       TEXT    DEFAULT 'Personal',
             created_at  TEXT    DEFAULT (datetime('now'))
-        );
-
-        CREATE TABLE IF NOT EXISTS statements (
+        )""",
+        """CREATE TABLE IF NOT EXISTS statements (
             id               INTEGER PRIMARY KEY AUTOINCREMENT,
             account_id       INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
             opening_date     TEXT NOT NULL,
@@ -41,9 +40,8 @@ def init_db() -> None:
             total_charges    REAL DEFAULT 0.0,
             total_credits    REAL DEFAULT 0.0,
             created_at       TEXT DEFAULT (datetime('now'))
-        );
-
-        CREATE TABLE IF NOT EXISTS transactions (
+        )""",
+        """CREATE TABLE IF NOT EXISTS transactions (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             account_id      INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
             date            TEXT    NOT NULL,
@@ -54,16 +52,14 @@ def init_db() -> None:
             notes           TEXT,
             source_hash     TEXT    UNIQUE,
             created_at      TEXT    DEFAULT (datetime('now'))
-        );
-
-        CREATE TABLE IF NOT EXISTS merchant_rules (
+        )""",
+        """CREATE TABLE IF NOT EXISTS merchant_rules (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             pattern       TEXT    NOT NULL UNIQUE,
             friendly_name TEXT    NOT NULL,
             created_at    TEXT    DEFAULT (datetime('now'))
-        );
-
-        CREATE TABLE IF NOT EXISTS assets (
+        )""",
+        """CREATE TABLE IF NOT EXISTS assets (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             name        TEXT    NOT NULL,
             type        TEXT    DEFAULT 'Other',
@@ -72,18 +68,16 @@ def init_db() -> None:
             notes       TEXT,
             updated_at  TEXT    DEFAULT (datetime('now')),
             created_at  TEXT    DEFAULT (datetime('now'))
-        );
-
-        CREATE TABLE IF NOT EXISTS net_worth_snapshots (
+        )""",
+        """CREATE TABLE IF NOT EXISTS net_worth_snapshots (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             snapshot_date TEXT  NOT NULL,
             total_assets  REAL  DEFAULT 0.0,
             total_liabilities REAL DEFAULT 0.0,
             net_worth     REAL  DEFAULT 0.0,
             created_at    TEXT  DEFAULT (datetime('now'))
-        );
-
-        CREATE TABLE IF NOT EXISTS goals (
+        )""",
+        """CREATE TABLE IF NOT EXISTS goals (
             id             INTEGER PRIMARY KEY AUTOINCREMENT,
             name           TEXT NOT NULL,
             type           TEXT CHECK(type IN ('Cash Flow','Savings','Debt Paydown','Investment','Custom')),
@@ -92,23 +86,23 @@ def init_db() -> None:
             deadline       TEXT,
             notes          TEXT,
             created_at     TEXT DEFAULT (datetime('now'))
-        );
-
-        CREATE TABLE IF NOT EXISTS reminders (
+        )""",
+        """CREATE TABLE IF NOT EXISTS reminders (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             title       TEXT NOT NULL,
             due_date    TEXT,
             notes       TEXT,
             done        INTEGER DEFAULT 0,
             created_at  TEXT DEFAULT (datetime('now'))
-        );
-
-        CREATE TABLE IF NOT EXISTS categories (
+        )""",
+        """CREATE TABLE IF NOT EXISTS categories (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             name       TEXT NOT NULL UNIQUE,
             is_default INTEGER DEFAULT 0
-        );
-    """)
+        )""",
+    ]
+    for stmt in ddl_statements:
+        conn.execute(stmt)
 
     conn.commit()
 

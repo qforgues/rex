@@ -51,31 +51,33 @@ You have access to the user's transaction history, account balances, and goals.
 Use this context to give personalised, actionable advice.
 """
 
-CATEGORY_SYSTEM_PROMPT = """
-You are a financial transaction categorization engine.
-You will receive a JSON array of transaction descriptions.
-You must return a JSON array of category strings — one per description, in the same order.
+ENRICH_SYSTEM_PROMPT = """
+You are a financial transaction analyzer.
+You will receive a JSON array of raw bank/credit card transaction descriptions.
+Return a JSON array of objects — one per description, in the same order — each with:
+  "name": clean merchant/payee name (title-cased, brand-quality)
+  "category": one of the allowed categories below
 
-Use ONLY these categories:
+Rules for "name":
+- Strip banking prefixes: EFT PMT, ACH, POS, SYF PAYMNT, CHECKCARD, ORIG CO NAME, PREAUTH, etc.
+- Drop city, state, phone numbers, URLs, invoice/reference codes, and masked account numbers
+- Use the well-known brand name: "ChatGPT" not "Openai Chatgpt Subscr", "T-Mobile" not "Tmobile Auto Pay"
+- Credit card payments ("Payment Thank You", "Autopay", "Online Payment") → "Credit Card Payment"
+- Foreign transaction fees → "Foreign Transaction Fee"
+- Interest charges → "Interest Charge"
+- Never return an empty string — always best-guess
+
+Allowed categories:
   Income, Housing, Groceries, Food & Dining, Transportation, Gas & Fuel,
   Utilities, Health & Medical, Health & Fitness, Entertainment, Shopping,
   Travel, Education, Home Improvement, Transfer, Interest & Fees,
   Investments, Subscriptions, Personal Care, Gifts & Donations, Uncategorized
 
-Rules:
-- Return ONLY a valid JSON array of strings, nothing else.
-- Every element must be one of the categories listed above.
-- If you cannot determine a category, use "Uncategorized".
-- Do not include explanations, markdown, or any text outside the JSON array.
+Return ONLY a valid JSON array of objects, no markdown, no explanation.
 
-Example input:  ["NETFLIX.COM", "WHOLE FOODS #42", "MYSTERY CHARGE 9923"]
-Example output: ["Entertainment", "Groceries", "Uncategorized"]
+Example input:  ["OPENAI *CHATGPT SUBSCR OPENAI.COM CA", "WHOLE FOODS #422 AUSTIN TX", "Payment Thank You-Mobile"]
+Example output: [{"name":"ChatGPT","category":"Subscriptions"},{"name":"Whole Foods","category":"Groceries"},{"name":"Credit Card Payment","category":"Transfer"}]
 """
-
-
-# ---------------------------------------------------------------------------
-# AI-assisted categorization
-# ---------------------------------------------------------------------------
 
 VALID_CATEGORIES = {
     "Income", "Housing", "Groceries", "Food & Dining", "Transportation",
@@ -85,170 +87,72 @@ VALID_CATEGORIES = {
     "Personal Care", "Gifts & Donations", "Uncategorized",
 }
 
-# Maximum descriptions per API call to stay within token limits
 _BATCH_SIZE = 50
 
 
-def get_ai_categories(transaction_descriptions: List[str]) -> List[str]:
-    """
-    Use the Anthropic API to suggest categories for a list of transaction
-    descriptions.
-
-    Parameters
-    ----------
-    transaction_descriptions : List[str]
-        Raw transaction description strings.
-
-    Returns
-    -------
-    List[str]
-        A list of category strings, one per input description.
-        Falls back to "Uncategorized" for any item that cannot be resolved.
-    """
-    if not transaction_descriptions:
-        return []
-
-    client = _get_client()
-    results: List[str] = []
-
-    # Process in batches to avoid hitting token limits
-    for batch_start in range(0, len(transaction_descriptions), _BATCH_SIZE):
-        batch = transaction_descriptions[batch_start : batch_start + _BATCH_SIZE]
-        batch_results = _categorize_batch(client, batch)
-        results.extend(batch_results)
-
-    return results
-
-
-def _categorize_batch(client: anthropic.Anthropic, descriptions: List[str]) -> List[str]:
-    """
-    Send a single batch of descriptions to the API and return categories.
-    Returns "Uncategorized" for every item if the API call fails.
-    """
+def _parse_json_response(raw: str) -> list:
+    """Strip markdown fences and parse JSON, returning empty list on failure."""
+    cleaned = re.sub(r"```(?:json)?\s*", "", raw).strip().rstrip("`").strip()
     try:
-        payload = json.dumps(descriptions, ensure_ascii=False)
-        message = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=1024,
-            system=CATEGORY_SYSTEM_PROMPT,
-            messages=[
-                {"role": "user", "content": payload}
-            ],
-        )
-
-        raw_text = message.content[0].text.strip()
-        categories = _parse_category_response(raw_text, len(descriptions))
-        return categories
-
-    except Exception as exc:
-        print(f"[rex.get_ai_categories] API call failed: {exc}")
-        return ["Uncategorized"] * len(descriptions)
-
-
-def _parse_category_response(raw_text: str, expected_count: int) -> List[str]:
-    """
-    Parse the raw API response text into a list of validated category strings.
-
-    Handles:
-    - Clean JSON arrays
-    - JSON embedded in markdown code fences
-    - Partial responses (pads with "Uncategorized")
-    - Extra items (truncates to expected_count)
-    """
-    # Strip markdown code fences if present
-    cleaned = re.sub(r"```(?:json)?\s*", "", raw_text).strip().rstrip("`").strip()
-
-    try:
-        parsed = json.loads(cleaned)
+        return json.loads(cleaned)
     except json.JSONDecodeError:
-        # Try to extract a JSON array from somewhere in the text
-        match = re.search(r"\[.*?\]", cleaned, re.DOTALL)
+        match = re.search(r"\[.*\]", cleaned, re.DOTALL)
         if match:
             try:
-                parsed = json.loads(match.group())
+                return json.loads(match.group())
             except json.JSONDecodeError:
-                return ["Uncategorized"] * expected_count
-        else:
-            return ["Uncategorized"] * expected_count
-
-    if not isinstance(parsed, list):
-        return ["Uncategorized"] * expected_count
-
-    # Validate each entry against the allowed set
-    validated: List[str] = []
-    for item in parsed[:expected_count]:
-        cat = str(item).strip() if item else "Uncategorized"
-        validated.append(cat if cat in VALID_CATEGORIES else "Uncategorized")
-
-    # Pad if the API returned fewer items than expected
-    while len(validated) < expected_count:
-        validated.append("Uncategorized")
-
-    return validated
+                pass
+    return []
 
 
-# ---------------------------------------------------------------------------
-# AI merchant name suggestions
-# ---------------------------------------------------------------------------
-
-MERCHANT_NAME_SYSTEM_PROMPT = """
-You are a financial transaction merchant name extractor.
-You will receive a JSON array of raw bank/credit card transaction descriptions.
-Return a JSON array of short, clean, human-readable merchant names — one per description, same order.
-
-Rules:
-- Extract only the core brand/merchant name — drop city, state, phone numbers, URLs, invoice numbers, and reference codes
-- Strip banking prefixes: EFT PMT, ACH, POS, SYF PAYMNT, CHECKCARD, ORIG CO NAME, PREAUTH, etc.
-- Strip trailing masked numbers (Xs, asterisks, trailing digits)
-- Use the well-known brand name, not the legal entity: "ChatGPT" not "Openai Chatgpt Subscr", "T-Mobile" not "Tmobile Auto Pay", "GitHub" not "Github Inc"
-- For credit card payments ("Payment Thank You", "Autopay", "Online Payment"), return "Credit Card Payment"
-- For foreign transaction fees, return "Foreign Transaction Fee"
-- For interest charges, return "Interest Charge"
-- Title-case the result
-- Never return an empty string — always best-guess
-- Return ONLY a valid JSON array of strings, nothing else
-
-Example input:  ["OPENAI *CHATGPT SUBSCR OPENAI.COM CA", "TMOBILE*AUTO PAY 800-937-8997 WA", "Payment Thank You-Mobile", "DNH*GODADDY#4015140893 AMSTERDAM", "AIRBNB * HMKYFYFM55 AIRBNB.COM CA"]
-Example output: ["ChatGPT", "T-Mobile", "Credit Card Payment", "GoDaddy", "Airbnb"]
-"""
-
-
-def get_ai_merchant_names(descriptions: List[str]) -> List[str]:
+def enrich_transactions(descriptions: List[str]) -> List[dict]:
     """
-    Use AI to suggest friendly merchant names for raw bank descriptions.
-    Returns one name per description. Falls back to the raw description on failure.
+    Single AI call returning name + category for each description.
+    Returns list of {"name": str, "category": str} dicts.
+    Raises on total failure so the caller can show the error.
     """
     if not descriptions:
         return []
 
     client = _get_client()
-    results: List[str] = []
+    results: List[dict] = []
 
     for batch_start in range(0, len(descriptions), _BATCH_SIZE):
-        batch = descriptions[batch_start : batch_start + _BATCH_SIZE]
-        try:
-            payload = json.dumps(batch, ensure_ascii=False)
-            message = client.messages.create(
-                model="claude-haiku-4-5-20251001",
-                max_tokens=1024,
-                system=MERCHANT_NAME_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": payload}],
-            )
-            raw = message.content[0].text.strip()
-            cleaned = re.sub(r"```(?:json)?\s*", "", raw).strip().rstrip("`").strip()
-            parsed = json.loads(cleaned)
-            if isinstance(parsed, list):
-                names = [str(item).strip() if item else batch[i] for i, item in enumerate(parsed[:len(batch)])]
-                while len(names) < len(batch):
-                    names.append(batch[len(names)])
-                results.extend(names)
+        batch = descriptions[batch_start: batch_start + _BATCH_SIZE]
+        payload = json.dumps(batch, ensure_ascii=False)
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=2048,
+            system=ENRICH_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": payload}],
+        )
+        parsed = _parse_json_response(message.content[0].text)
+
+        for i, item in enumerate(batch):
+            if i < len(parsed) and isinstance(parsed[i], dict):
+                name = str(parsed[i].get("name") or item).strip() or item
+                cat = str(parsed[i].get("category") or "Uncategorized").strip()
+                if cat not in VALID_CATEGORIES:
+                    cat = "Uncategorized"
             else:
-                results.extend(batch)
-        except Exception as exc:
-            print(f"[rex.get_ai_merchant_names] failed: {exc}")
-            results.extend(batch)
+                name = item
+                cat = "Uncategorized"
+            results.append({"name": name, "category": cat})
 
     return results
+
+
+# Keep for backwards compat with parsers.py categorize_transactions
+def get_ai_categories(transaction_descriptions: List[str]) -> List[str]:
+    """Thin wrapper around enrich_transactions, returns only categories."""
+    if not transaction_descriptions:
+        return []
+    try:
+        enriched = enrich_transactions(transaction_descriptions)
+        return [r["category"] for r in enriched]
+    except Exception as exc:
+        print(f"[rex.get_ai_categories] failed: {exc}")
+        return ["Uncategorized"] * len(transaction_descriptions)
 
 
 # ---------------------------------------------------------------------------
