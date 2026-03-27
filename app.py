@@ -650,23 +650,47 @@ elif page == "Transactions":
                         for _, row in parsed_df.iterrows()
                     ]
 
-                    # Top row: summary label + button on the right
                     stmt_meta = st.session_state.get("stmt_meta")
-                    th1, th2 = st.columns([4, 1])
-                    th1.markdown(f"**{len(parsed_df)} transactions** ready to import")
-                    do_import = th2.button("Categorize & Import", type="primary", use_container_width=True)
 
-                    # Statement summary metrics
+                    # ── Header row: title + button ──────────────────────────
+                    hcol1, hcol2 = st.columns([3, 1])
+                    with hcol1:
+                        period = ""
+                        if stmt_meta:
+                            period = f" &nbsp;·&nbsp; {stmt_meta['opening_date']} → {stmt_meta['closing_date']}"
+                        st.markdown(
+                            f"<div style='padding-top:6px;font-size:0.9rem;font-weight:600'>"
+                            f"{len(parsed_df)} transactions{period}</div>",
+                            unsafe_allow_html=True,
+                        )
+                    with hcol2:
+                        do_import = st.button("Categorize & Import ▶", type="primary", use_container_width=True)
+
+                    # ── Statement summary bar ───────────────────────────────
                     if stmt_meta:
                         m = stmt_meta
-                        sc1, sc2, sc3, sc4 = st.columns(4)
-                        sc1.metric("Opening Balance", f"${m['opening_balance']:,.2f}")
-                        sc2.metric("Charges", f"${m['total_charges']:,.2f}")
-                        sc3.metric("Payments", f"${m['total_credits']:,.2f}")
-                        sc4.metric("Closing Balance", f"${m['closing_balance']:,.2f}")
-                        st.caption(f"Statement period: {m['opening_date']} → {m['closing_date']}")
+                        def _pill(label, val, color="#888"):
+                            return (
+                                f"<span style='margin-right:18px'>"
+                                f"<span style='font-size:0.68rem;color:#888;text-transform:uppercase;letter-spacing:.04em'>{label}</span> "
+                                f"<span style='font-size:0.88rem;font-weight:600;color:{color}'>{val}</span>"
+                                f"</span>"
+                            )
+                        bar = (
+                            _pill("Open", f"${m['opening_balance']:,.2f}") +
+                            _pill("Charges", f"−${m['total_charges']:,.2f}", "#e74c3c") +
+                            _pill("Payments", f"+${m['total_credits']:,.2f}", "#2ecc71") +
+                            _pill("Close", f"${m['closing_balance']:,.2f}", "#3498db")
+                        )
+                        st.markdown(
+                            f"<div style='padding:6px 0 10px 0;border-bottom:1px solid #333;margin-bottom:10px'>{bar}</div>",
+                            unsafe_allow_html=True,
+                        )
 
-                    st.dataframe(parsed_df.head(10), use_container_width=True, hide_index=True)
+                    # ── Preview: first 3 rows only ──────────────────────────
+                    preview_df = parsed_df.head(3)[["date", "description", "amount"]].copy()
+                    preview_df["amount"] = preview_df["amount"].map(lambda x: f"${x:,.2f}")
+                    st.dataframe(preview_df, use_container_width=True, hide_index=True)
 
                     if do_import:
                         with st.spinner("Categorizing and naming transactions with AI..."):
