@@ -417,7 +417,7 @@ elif page == "Transactions":
         filter_acct = fc1.selectbox("Filter by Account", ["All"] + [a["name"] for a in accounts])
         filter_cat = fc2.selectbox("Filter by Category", ["All"] + db.get_categories())
         with fc3:
-            st.markdown("<div style='padding-top:4px'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='padding-top:28px'></div>", unsafe_allow_html=True)
             if st.button("＋ Add", use_container_width=True):
                 st.session_state["show_add_txn"] = not st.session_state.get("show_add_txn", False)
 
