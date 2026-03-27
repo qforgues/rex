@@ -653,7 +653,7 @@ elif page == "Transactions":
                     stmt_meta = st.session_state.get("stmt_meta")
 
                     # ── Header row: title + button ──────────────────────────
-                    hcol1, hcol2 = st.columns([3, 1])
+                    hcol1, hcol2 = st.columns([2, 1])
                     with hcol1:
                         period = ""
                         if stmt_meta:
@@ -687,11 +687,7 @@ elif page == "Transactions":
                             unsafe_allow_html=True,
                         )
 
-                    # ── Preview: first 3 rows only ──────────────────────────
-                    preview_df = parsed_df.head(3)[["date", "description", "amount"]].copy()
-                    preview_df["amount"] = preview_df["amount"].map(lambda x: f"${x:,.2f}")
-                    st.dataframe(preview_df, use_container_width=True, hide_index=True)
-
+                    # ── Processing (runs ABOVE the preview so spinner is visible at top) ──
                     if do_import:
                         with st.spinner("Categorizing and naming transactions with AI..."):
                             categorized_df = parsers.categorize_transactions(parsed_df.copy())
@@ -745,6 +741,12 @@ elif page == "Transactions":
                             st.session_state.pop(k, None)
                         st.rerun()
 
+                    else:
+                        # ── Preview: 3 rows, shown only when not importing ──────
+                        preview_df = parsed_df.head(3)[["date", "description", "amount"]].copy()
+                        preview_df["amount"] = preview_df["amount"].map(lambda x: f"${x:,.2f}")
+                        st.dataframe(preview_df, use_container_width=True, hide_index=True)
+
     if dev_mode and tab5:
         with tab5:
             st.subheader("Import Log")
@@ -752,13 +754,31 @@ elif page == "Transactions":
             if not imports:
                 st.info("No imports yet.")
             else:
+                # Header row
+                st.markdown(
+                    "<div style='display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 40px;"
+                    "gap:8px;padding:4px 8px;font-size:0.68rem;color:#666;"
+                    "text-transform:uppercase;letter-spacing:.04em'>"
+                    "<span>Account · Period</span><span>Open</span><span>Charges</span>"
+                    "<span>Credits</span><span>Close · Txns</span><span></span></div>",
+                    unsafe_allow_html=True,
+                )
                 for imp in imports:
-                    c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 1])
-                    c1.write(f"**{imp['account_name']}** · {imp['opening_date']} → {imp['closing_date']}")
-                    c2.write(f"Open: ${imp['opening_balance']:,.2f}")
-                    c3.write(f"Charges: ${imp['total_charges']:,.2f} · Credits: ${imp['total_credits']:,.2f}")
-                    c4.write(f"Close: ${imp['closing_balance']:,.2f} · {imp['txn_count']} txns")
-                    if c5.button("🗑", key=f"log_del_{imp['id']}", help="Delete this import"):
+                    row_html = (
+                        f"<div style='display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 40px;"
+                        f"gap:8px;padding:6px 8px;border-top:1px solid #222;font-size:0.82rem;"
+                        f"align-items:center'>"
+                        f"<span><b>{imp['account_name']}</b> &nbsp;{imp['opening_date']} → {imp['closing_date']}</span>"
+                        f"<span style='color:#aaa'>{imp['opening_balance']:,.2f}</span>"
+                        f"<span style='color:#e74c3c'>-{imp['total_charges']:,.2f}</span>"
+                        f"<span style='color:#2ecc71'>+{imp['total_credits']:,.2f}</span>"
+                        f"<span style='color:#3498db'>{imp['closing_balance']:,.2f} &nbsp;<span style='color:#666'>{imp['txn_count']}t</span></span>"
+                        f"<span></span>"
+                        f"</div>"
+                    )
+                    lc, rc = st.columns([12, 1])
+                    lc.markdown(row_html, unsafe_allow_html=True)
+                    if rc.button("🗑", key=f"log_del_{imp['id']}", help="Delete this import"):
                         count = db.delete_import(imp["id"])
                         db.save_net_worth_snapshot()
                         st.success(f"Deleted — {count} transactions removed.")

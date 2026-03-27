@@ -332,11 +332,15 @@ def insert_transaction(account_id: int, date: str, description: str, amount: flo
             (account_id, date, description, merchant_name or None, amount, category, notes, source_hash, statement_id),
         )
         inserted = conn.execute("SELECT changes()").fetchone()[0] > 0
-        if not inserted and statement_id and source_hash:
-            # Transaction exists but may lack a statement link — backfill it
+        if not inserted and source_hash:
+            # Transaction exists — backfill statement link, merchant name, and category if missing
             conn.execute(
-                "UPDATE transactions SET statement_id=? WHERE source_hash=? AND statement_id IS NULL",
-                (statement_id, source_hash),
+                """UPDATE transactions SET
+                     statement_id = COALESCE(statement_id, ?),
+                     merchant_name = CASE WHEN (merchant_name IS NULL OR merchant_name = '') AND ? != '' THEN ? ELSE merchant_name END,
+                     category = CASE WHEN (category IS NULL OR category = 'Uncategorized') AND ? NOT IN ('', 'Uncategorized') THEN ? ELSE category END
+                   WHERE source_hash = ?""",
+                (statement_id, merchant_name, merchant_name, category, category, source_hash),
             )
         conn.commit()
     finally:
