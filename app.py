@@ -219,17 +219,18 @@ elif page == "Accounts":
                 statements = db.get_account_statements(acct["id"])
                 if statements:
                     st.caption("Statement History")
-                    stmt_rows = []
                     for s in statements:
-                        stmt_rows.append({
-                            "Period": f"{s['opening_date']} → {s['closing_date']}",
-                            "Opening": f"${s['opening_balance']:,.2f}",
-                            "Charges": f"${s['total_charges']:,.2f}",
-                            "Payments": f"${s['total_credits']:,.2f}",
-                            "Closing": f"${s['closing_balance']:,.2f}",
-                            "Movement": f"${s['total_charges'] - s['total_credits']:+,.2f}",
-                        })
-                    st.dataframe(stmt_rows, use_container_width=True, hide_index=True)
+                        sc1, sc2, sc3, sc4, sc5, sc6 = st.columns([3, 2, 2, 2, 2, 1])
+                        sc1.write(f"{s['opening_date']} → {s['closing_date']}")
+                        sc2.write(f"Open: ${s['opening_balance']:,.2f}")
+                        sc3.write(f"Charges: ${s['total_charges']:,.2f}")
+                        sc4.write(f"Payments: ${s['total_credits']:,.2f}")
+                        sc5.write(f"Close: ${s['closing_balance']:,.2f}")
+                        if sc6.button("🗑", key=f"del_stmt_{s['id']}", help="Delete this import"):
+                            count = db.delete_import(s["id"])
+                            db.save_net_worth_snapshot()
+                            st.success(f"Deleted import ({count} transactions removed).")
+                            st.rerun()
     else:
         st.info("No accounts yet. Add one above.")
 
@@ -638,6 +639,17 @@ elif page == "Transactions":
                                 for idx, name in zip(need_ai_idx, ai_names):
                                     merchant_names[idx] = name
 
+                        # Save statement first so we have its ID to link transactions
+                        stmt_id = None
+                        if st.session_state.get("stmt_meta"):
+                            m = st.session_state["stmt_meta"]
+                            stmt_id = db.insert_statement(
+                                acct_id,
+                                m["opening_date"], m["closing_date"],
+                                m["opening_balance"], m["closing_balance"],
+                                m["total_charges"], m["total_credits"],
+                            )
+
                         inserted = skipped = 0
                         for (_, row), src_hash, mname in zip(categorized_df.iterrows(), all_hashes, merchant_names):
                             if src_hash in needs_review_hashes:
@@ -647,21 +659,12 @@ elif page == "Transactions":
                                 acct_id, str(row["date"]), str(row["description"]),
                                 float(row["amount"]), row.get("category", "Uncategorized"),
                                 source_hash=src_hash, merchant_name=mname or "",
+                                statement_id=stmt_id,
                             )
                             if ok:
                                 inserted += 1
                             else:
                                 skipped += 1
-
-                        # Save statement metadata
-                        if st.session_state.get("stmt_meta"):
-                            m = st.session_state["stmt_meta"]
-                            db.insert_statement(
-                                acct_id,
-                                m["opening_date"], m["closing_date"],
-                                m["opening_balance"], m["closing_balance"],
-                                m["total_charges"], m["total_credits"],
-                            )
 
                         db.save_net_worth_snapshot()
                         msg = f"✅ Imported {inserted} transactions."

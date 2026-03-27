@@ -117,6 +117,7 @@ def init_db() -> None:
         "ALTER TABLE transactions ADD COLUMN merchant_name TEXT",
         "ALTER TABLE transactions ADD COLUMN excluded INTEGER DEFAULT 0",
         "ALTER TABLE accounts ADD COLUMN scope TEXT DEFAULT 'Personal'",
+        "ALTER TABLE transactions ADD COLUMN statement_id INTEGER REFERENCES statements(id)",
     ]:
         try:
             conn.execute(migration)
@@ -187,17 +188,19 @@ def update_account(account_id: int, name: str, acct_type: str, institution: str,
 
 def insert_statement(account_id: int, opening_date: str, closing_date: str,
                      opening_balance: float, closing_balance: float,
-                     total_charges: float, total_credits: float) -> None:
-    """Record a statement import. Replaces any existing statement for the same closing date."""
+                     total_charges: float, total_credits: float) -> int:
+    """Record a statement import. Returns the new statement ID."""
     conn = get_connection()
-    conn.execute(
-        "INSERT OR REPLACE INTO statements "
+    cur = conn.execute(
+        "INSERT INTO statements "
         "(account_id, opening_date, closing_date, opening_balance, closing_balance, total_charges, total_credits) "
         "VALUES (?,?,?,?,?,?,?)",
         (account_id, opening_date, closing_date, opening_balance, closing_balance, total_charges, total_credits),
     )
     conn.commit()
+    new_id = cur.lastrowid
     conn.close()
+    return new_id
 
 
 def get_account_statements(account_id: int) -> list[dict]:
@@ -220,6 +223,19 @@ def get_latest_statement_closing_balance(account_id: int) -> float:
     ).fetchone()
     conn.close()
     return float(row["closing_balance"]) if row else 0.0
+
+
+def delete_import(statement_id: int) -> int:
+    """Delete a statement and all transactions linked to it. Returns number of transactions deleted."""
+    conn = get_connection()
+    conn.execute("PRAGMA foreign_keys = ON")
+    row = conn.execute("SELECT COUNT(*) FROM transactions WHERE statement_id=?", (statement_id,)).fetchone()
+    txn_count = row[0] if row else 0
+    conn.execute("DELETE FROM transactions WHERE statement_id=?", (statement_id,))
+    conn.execute("DELETE FROM statements WHERE id=?", (statement_id,))
+    conn.commit()
+    conn.close()
+    return txn_count
 
 
 def delete_account(account_id: int) -> None:
@@ -255,15 +271,15 @@ def get_transactions(account_id: Optional[int] = None, limit: int = 1000) -> lis
 
 def insert_transaction(account_id: int, date: str, description: str, amount: float,
                        category: str = "Uncategorized", notes: str = "", source_hash: str = "",
-                       merchant_name: str = "") -> bool:
+                       merchant_name: str = "", statement_id: int = None) -> bool:
     """Insert a transaction; returns True if inserted, False if duplicate."""
     conn = get_connection()
     try:
         conn.execute(
             "INSERT OR IGNORE INTO transactions "
-            "(account_id, date, description, merchant_name, amount, category, notes, source_hash) "
-            "VALUES (?,?,?,?,?,?,?,?)",
-            (account_id, date, description, merchant_name or None, amount, category, notes, source_hash),
+            "(account_id, date, description, merchant_name, amount, category, notes, source_hash, statement_id) "
+            "VALUES (?,?,?,?,?,?,?,?,?)",
+            (account_id, date, description, merchant_name or None, amount, category, notes, source_hash, statement_id),
         )
         conn.commit()
         inserted = conn.execute("SELECT changes()").fetchone()[0] > 0
