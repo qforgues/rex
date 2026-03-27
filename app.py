@@ -175,35 +175,40 @@ elif page == "Accounts":
     accounts = db.get_accounts()
 
     ACCT_TYPES = ["Checking", "Savings", "Credit Card", "Investment", "Loan", "Other"]
+    SCOPES = ["Personal", "Business"]
 
     with st.expander("➕ Add Account", expanded=not accounts):
         with st.form("add_account"):
-            c1, c2, c3 = st.columns([3, 2, 2])
+            c1, c2, c3, c4 = st.columns([3, 2, 2, 2])
             name = c1.text_input("Name")
             acct_type = c2.selectbox("Type", ACCT_TYPES)
             institution = c3.text_input("Institution")
+            scope = c4.selectbox("Scope", SCOPES)
             if st.form_submit_button("Add Account", use_container_width=True):
                 if not name:
                     st.error("Account name is required.")
                 else:
-                    db.add_account(name, acct_type, institution)
+                    db.add_account(name, acct_type, institution, scope)
                     db.save_net_worth_snapshot()
                     st.success(f"'{name}' added.")
                     st.rerun()
 
     if accounts:
         for acct in accounts:
-            label = f"**{acct['name']}** &nbsp; {acct['type']} &nbsp;·&nbsp; {acct['institution'] or '—'} &nbsp;·&nbsp; ${acct['balance']:,.2f}"
+            scope_tag = acct.get("scope") or "Personal"
+            label = f"**{acct['name']}** &nbsp;·&nbsp; {acct['type']} &nbsp;·&nbsp; {acct['institution'] or '—'} &nbsp;·&nbsp; {scope_tag} &nbsp;·&nbsp; ${acct['balance']:,.2f}"
             with st.expander(label):
                 with st.form(f"edit_acct_{acct['id']}"):
-                    c1, c2, c3 = st.columns([3, 2, 2])
+                    c1, c2, c3, c4 = st.columns([3, 2, 2, 2])
                     new_name = c1.text_input("Name", value=acct["name"])
                     new_type = c2.selectbox("Type", ACCT_TYPES,
                                             index=ACCT_TYPES.index(acct["type"]) if acct["type"] in ACCT_TYPES else 0)
                     new_inst = c3.text_input("Institution", value=acct["institution"] or "")
+                    new_scope = c4.selectbox("Scope", SCOPES,
+                                             index=SCOPES.index(scope_tag) if scope_tag in SCOPES else 0)
                     cs, cd = st.columns(2)
                     if cs.form_submit_button("Save", use_container_width=True):
-                        db.update_account(acct["id"], new_name, new_type, new_inst)
+                        db.update_account(acct["id"], new_name, new_type, new_inst, new_scope)
                         db.save_net_worth_snapshot()
                         st.success("Updated.")
                         st.rerun()
@@ -573,148 +578,48 @@ elif page == "Transactions":
                     st.dataframe(parsed_df.head(10), use_container_width=True, hide_index=True)
 
                     if st.button("Categorize & Import"):
-                        with st.spinner("Categorizing..."):
+                        with st.spinner("Categorizing and naming transactions with AI..."):
                             categorized_df = parsers.categorize_transactions(parsed_df.copy())
+                            descriptions = categorized_df["description"].astype(str).tolist()
 
-                        inserted_txns = []
-                        review_txns = []
-                        skipped = 0
-                        for (_, row), src_hash in zip(categorized_df.iterrows(), all_hashes):
+                            # Use saved rules where available, AI for the rest
+                            merchant_names = []
+                            need_ai_descs, need_ai_idx = [], []
+                            for i, desc in enumerate(descriptions):
+                                matched = db.find_matching_rule(desc)
+                                if matched:
+                                    merchant_names.append(matched)
+                                else:
+                                    merchant_names.append(None)
+                                    need_ai_descs.append(desc)
+                                    need_ai_idx.append(i)
+                            if need_ai_descs:
+                                ai_names = get_ai_merchant_names(need_ai_descs)
+                                for idx, name in zip(need_ai_idx, ai_names):
+                                    merchant_names[idx] = name
+
+                        inserted = skipped = 0
+                        for (_, row), src_hash, mname in zip(categorized_df.iterrows(), all_hashes, merchant_names):
                             if src_hash in needs_review_hashes:
-                                # Already exists but needs review — add to review list
-                                review_txns.append({
-                                    "description": str(row["description"]),
-                                    "source_hash": src_hash,
-                                    "existing": True,
-                                })
+                                skipped += 1
                                 continue
                             ok = db.insert_transaction(
                                 acct_id, str(row["date"]), str(row["description"]),
                                 float(row["amount"]), row.get("category", "Uncategorized"),
-                                source_hash=src_hash,
+                                source_hash=src_hash, merchant_name=mname or "",
                             )
                             if ok:
-                                inserted_txns.append({
-                                    "description": str(row["description"]),
-                                    "source_hash": src_hash,
-                                    "existing": False,
-                                    "category": row.get("category", "Uncategorized"),
-                                })
+                                inserted += 1
                             else:
                                 skipped += 1
 
-                        inserted = len(inserted_txns)
-                        msg = f"✅ Imported {inserted} new transactions."
+                        msg = f"✅ Imported {inserted} transactions."
                         if skipped:
-                            msg += f" ({skipped} already up to date)"
-                        if review_txns:
-                            msg += f" | {len(review_txns)} need review below."
+                            msg += f" ({skipped} skipped — already exist)"
                         st.success(msg)
-
-                        # Build pending name reviews: new + existing-needing-review
-                        all_for_review = inserted_txns + review_txns
-                        if all_for_review:
-                            with st.spinner("Looking up merchant names..."):
-                                pending = []
-                                need_ai = []
-                                need_ai_idx = []
-                                for i, t in enumerate(all_for_review):
-                                    matched = db.find_matching_rule(t["description"])
-                                    # For existing transactions, pull their current category; for new, use AI-assigned
-                                    existing_cat = None
-                                    if t.get("existing"):
-                                        for er in needs_review:
-                                            if er["source_hash"] == t["source_hash"]:
-                                                existing_cat = er.get("category")
-                                                break
-                                    else:
-                                        existing_cat = t.get("category")
-                                    if matched:
-                                        pending.append({
-                                            "source_hash": t["source_hash"],
-                                            "description": t["description"],
-                                            "suggested_name": matched,
-                                            "current_category": existing_cat or "Uncategorized",
-                                            "from_rule": True,
-                                        })
-                                    else:
-                                        need_ai.append(t["description"])
-                                        need_ai_idx.append(i)
-                                        pending.append({
-                                            "source_hash": t["source_hash"],
-                                            "description": t["description"],
-                                            "suggested_name": "",
-                                            "current_category": existing_cat or "Uncategorized",
-                                            "from_rule": False,
-                                        })
-
-                                if need_ai:
-                                    ai_names = get_ai_merchant_names(need_ai)
-                                    for idx, name in zip(need_ai_idx, ai_names):
-                                        pending[idx]["suggested_name"] = name
-
-                            st.session_state["pending_names"] = pending
                         st.session_state["csv_imported"] = True
 
-            # --- Pending Name Review ---
-            if st.session_state.get("pending_names"):
-                pending = st.session_state["pending_names"]
-                st.divider()
-                st.subheader("Review Merchant Names")
-                st.caption("AI-suggested names are shown below. Edit any name, then save. Check 'Save as rule' to auto-apply this name to future imports.")
-
-                all_cats = db.get_categories()
-
-                review_df = pd.DataFrame([{
-                    "description": p["description"],
-                    "friendly_name": p["suggested_name"],
-                    "category": p.get("current_category", "Uncategorized"),
-                    "save_as_rule": not p["from_rule"],
-                } for p in pending])
-
-                edited_review = st.data_editor(
-                    review_df,
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config={
-                        "description": st.column_config.TextColumn("Raw Description", disabled=True, width="large"),
-                        "friendly_name": st.column_config.TextColumn("Friendly Name", width="medium"),
-                        "category": st.column_config.SelectboxColumn("Category", options=all_cats, width="medium"),
-                        "save_as_rule": st.column_config.CheckboxColumn("Save as Rule", width="small"),
-                    },
-                    key="review_names_editor",
-                )
-
-                if st.button("Save Names & Categories"):
-                    _conn = db.get_connection()
-                    saved_rules = 0
-                    saved_names = 0
-                    for i, row in edited_review.iterrows():
-                        fname = str(row["friendly_name"]).strip()
-                        src_hash = pending[i]["source_hash"]
-                        txn_row = _conn.execute(
-                            "SELECT id FROM transactions WHERE source_hash=?", (src_hash,)
-                        ).fetchone()
-                        if txn_row:
-                            if fname:
-                                db.update_transaction_merchant_name(txn_row["id"], fname)
-                                saved_names += 1
-                            cat = str(row.get("category", "Uncategorized"))
-                            db.update_transaction(txn_row["id"], cat, "")
-                        if fname and row["save_as_rule"]:
-                            norm = parsers.normalize_description(pending[i]["description"])
-                            db.add_merchant_rule(norm, fname)
-                            saved_rules += 1
-                    _conn.close()
-                    st.success(f"Saved {saved_names} names, {saved_rules} new rules.")
-                    st.session_state.pop("pending_names", None)
-                    st.rerun()
-
-                if st.button("Skip", type="secondary"):
-                    st.session_state.pop("pending_names", None)
-                    st.rerun()
-
-            elif st.session_state.get("csv_imported") and not st.session_state.get("pending_names"):
+            if st.session_state.get("csv_imported"):
                 st.session_state.pop("csv_file_key", None)
                 st.session_state.pop("csv_df", None)
                 st.session_state.pop("csv_acct_id", None)

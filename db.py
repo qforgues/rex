@@ -27,6 +27,7 @@ def init_db() -> None:
             institution TEXT,
             balance     REAL    DEFAULT 0.0,
             currency    TEXT    DEFAULT 'USD',
+            scope       TEXT    DEFAULT 'Personal',
             created_at  TEXT    DEFAULT (datetime('now'))
         );
 
@@ -103,6 +104,7 @@ def init_db() -> None:
     for migration in [
         "ALTER TABLE transactions ADD COLUMN merchant_name TEXT",
         "ALTER TABLE transactions ADD COLUMN excluded INTEGER DEFAULT 0",
+        "ALTER TABLE accounts ADD COLUMN scope TEXT DEFAULT 'Personal'",
     ]:
         try:
             conn.execute(migration)
@@ -147,11 +149,11 @@ def get_accounts() -> list[dict]:
     return [dict(r) for r in rows]
 
 
-def add_account(name: str, acct_type: str, institution: str) -> int:
+def add_account(name: str, acct_type: str, institution: str, scope: str = "Personal") -> int:
     conn = get_connection()
     cur = conn.execute(
-        "INSERT INTO accounts (name, type, institution, balance, currency) VALUES (?,?,?,0.0,'USD')",
-        (name, acct_type, institution),
+        "INSERT INTO accounts (name, type, institution, balance, currency, scope) VALUES (?,?,?,0.0,'USD',?)",
+        (name, acct_type, institution, scope),
     )
     conn.commit()
     new_id = cur.lastrowid
@@ -159,11 +161,11 @@ def add_account(name: str, acct_type: str, institution: str) -> int:
     return new_id
 
 
-def update_account(account_id: int, name: str, acct_type: str, institution: str) -> None:
+def update_account(account_id: int, name: str, acct_type: str, institution: str, scope: str = "Personal") -> None:
     conn = get_connection()
     conn.execute(
-        "UPDATE accounts SET name=?, type=?, institution=? WHERE id=?",
-        (name, acct_type, institution, account_id),
+        "UPDATE accounts SET name=?, type=?, institution=?, scope=? WHERE id=?",
+        (name, acct_type, institution, scope, account_id),
     )
     conn.commit()
     conn.close()
@@ -201,14 +203,16 @@ def get_transactions(account_id: Optional[int] = None, limit: int = 1000) -> lis
 
 
 def insert_transaction(account_id: int, date: str, description: str, amount: float,
-                       category: str = "Uncategorized", notes: str = "", source_hash: str = "") -> bool:
+                       category: str = "Uncategorized", notes: str = "", source_hash: str = "",
+                       merchant_name: str = "") -> bool:
     """Insert a transaction; returns True if inserted, False if duplicate."""
     conn = get_connection()
     try:
         conn.execute(
-            "INSERT OR IGNORE INTO transactions (account_id, date, description, amount, category, notes, source_hash) "
-            "VALUES (?,?,?,?,?,?,?)",
-            (account_id, date, description, amount, category, notes, source_hash),
+            "INSERT OR IGNORE INTO transactions "
+            "(account_id, date, description, merchant_name, amount, category, notes, source_hash) "
+            "VALUES (?,?,?,?,?,?,?,?)",
+            (account_id, date, description, merchant_name or None, amount, category, notes, source_hash),
         )
         conn.commit()
         inserted = conn.execute("SELECT changes()").fetchone()[0] > 0
