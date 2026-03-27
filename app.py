@@ -219,11 +219,33 @@ elif page == "Accounts":
                     st.success(f"'{name}' added.")
                     st.rerun()
 
+    st.markdown("""
+    <style>
+    details:has(.acct-liability) {
+        background: rgba(231,76,60,0.08) !important;
+        border-left: 3px solid #e74c3c !important;
+        border-radius: 6px;
+    }
+    details:has(.acct-asset) {
+        background: rgba(46,204,113,0.08) !important;
+        border-left: 3px solid #2ecc71 !important;
+        border-radius: 6px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     if accounts:
         for acct in accounts:
             scope_tag = acct.get("scope") or "Personal"
+            is_liability = acct["type"] in ("Credit Card", "Loan")
             label = f"**{acct['name']}** &nbsp;·&nbsp; {acct['type']} &nbsp;·&nbsp; {acct['institution'] or '—'} &nbsp;·&nbsp; {scope_tag} &nbsp;·&nbsp; ${acct['balance']:,.2f}"
             with st.expander(label):
+                # Hidden marker lets CSS :has() color the parent <details>
+                st.markdown(
+                    '<span class="acct-liability" style="display:none"></span>' if is_liability
+                    else '<span class="acct-asset" style="display:none"></span>',
+                    unsafe_allow_html=True,
+                )
                 with st.form(f"edit_acct_{acct['id']}"):
                     c1, c2, c3, c4 = st.columns([3, 2, 2, 2])
                     new_name = c1.text_input("Name", value=acct["name"])
@@ -710,7 +732,7 @@ elif page == "Transactions":
                     c2.write(f"Open: ${imp['opening_balance']:,.2f}")
                     c3.write(f"Charges: ${imp['total_charges']:,.2f} · Credits: ${imp['total_credits']:,.2f}")
                     c4.write(f"Close: ${imp['closing_balance']:,.2f} · {imp['txn_count']} txns")
-                    if c5.button("Delete", key=f"log_del_{imp['id']}", type="secondary"):
+                    if c5.button("🗑", key=f"log_del_{imp['id']}", help="Delete this import"):
                         count = db.delete_import(imp["id"])
                         db.save_net_worth_snapshot()
                         st.success(f"Deleted — {count} transactions removed.")
