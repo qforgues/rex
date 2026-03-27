@@ -319,7 +319,10 @@ def get_transactions(account_id: Optional[int] = None, limit: int = 1000) -> lis
 def insert_transaction(account_id: int, date: str, description: str, amount: float,
                        category: str = "Uncategorized", notes: str = "", source_hash: str = "",
                        merchant_name: str = "", statement_id: int = None) -> bool:
-    """Insert a transaction; returns True if inserted, False if duplicate."""
+    """
+    Insert a transaction; returns True if newly inserted, False if it already existed.
+    If it already existed and has no statement_id, links it to the provided one.
+    """
     conn = get_connection()
     try:
         conn.execute(
@@ -328,8 +331,14 @@ def insert_transaction(account_id: int, date: str, description: str, amount: flo
             "VALUES (?,?,?,?,?,?,?,?,?)",
             (account_id, date, description, merchant_name or None, amount, category, notes, source_hash, statement_id),
         )
-        conn.commit()
         inserted = conn.execute("SELECT changes()").fetchone()[0] > 0
+        if not inserted and statement_id and source_hash:
+            # Transaction exists but may lack a statement link — backfill it
+            conn.execute(
+                "UPDATE transactions SET statement_id=? WHERE source_hash=? AND statement_id IS NULL",
+                (statement_id, source_hash),
+            )
+        conn.commit()
     finally:
         conn.close()
     return inserted

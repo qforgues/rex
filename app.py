@@ -612,11 +612,7 @@ elif page == "Transactions":
                         hashlib.md5(f"{acct_id}|{row['date']}|{row['description']}|{row['amount']}".encode()).hexdigest()
                         for _, row in parsed_df.iterrows()
                     ]
-                    needs_review = db.get_transactions_needing_review(all_hashes)
-                    needs_review_hashes = {r["source_hash"] for r in needs_review}
-
-                    if needs_review:
-                        st.warning(f"⚠️ {len(needs_review)} already imported — will be skipped.")
+                    needs_review_hashes = set()
 
                     # Show statement summary
                     stmt_meta = st.session_state.get("stmt_meta")
@@ -664,11 +660,8 @@ elif page == "Transactions":
                                 m["total_charges"], m["total_credits"],
                             )
 
-                        inserted = skipped = 0
+                        inserted = linked = 0
                         for (_, row), src_hash, mname in zip(categorized_df.iterrows(), all_hashes, merchant_names):
-                            if src_hash in needs_review_hashes:
-                                skipped += 1
-                                continue
                             ok = db.insert_transaction(
                                 acct_id, str(row["date"]), str(row["description"]),
                                 float(row["amount"]), row.get("category", "Uncategorized"),
@@ -678,12 +671,12 @@ elif page == "Transactions":
                             if ok:
                                 inserted += 1
                             else:
-                                skipped += 1
+                                linked += 1
 
                         db.save_net_worth_snapshot()
                         msg = f"✅ Imported {inserted} transactions."
-                        if skipped:
-                            msg += f" ({skipped} skipped — already exist)"
+                        if linked:
+                            msg += f" ({linked} already existed — linked to statement)"
                         st.success(msg)
                         st.session_state["csv_imported"] = True
 
