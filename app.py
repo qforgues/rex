@@ -28,6 +28,16 @@ st.set_page_config(
 db.init_db()
 
 # ---------------------------------------------------------------------------
+# Dev log (session-scoped, copyable in dev mode)
+# ---------------------------------------------------------------------------
+if "dev_log" not in st.session_state:
+    st.session_state["dev_log"] = []
+
+def _dev_log(msg: str):
+    from datetime import datetime as _dt
+    st.session_state["dev_log"].append(f"[{_dt.now().strftime('%H:%M:%S')}] {msg}")
+
+# ---------------------------------------------------------------------------
 # Sidebar navigation
 # ---------------------------------------------------------------------------
 st.sidebar.title("💰 Rex")
@@ -50,7 +60,16 @@ if dev_mode:
         conn.execute("DELETE FROM net_worth_snapshots")
         conn.commit()
         conn.close()
+        st.session_state["dev_log"] = []
         st.sidebar.success("Data wiped.")
+    if st.sidebar.button("Clear Error Log"):
+        st.session_state["dev_log"] = []
+        st.rerun()
+
+if dev_mode and st.session_state.get("dev_log"):
+    with st.sidebar.expander(f"📋 Error Log ({len(st.session_state['dev_log'])} entries)", expanded=False):
+        log_text = "\n".join(st.session_state["dev_log"])
+        st.code(log_text, language=None)
 
 st.sidebar.divider()
 if st.sidebar.button("Quit Rex"):
@@ -693,6 +712,7 @@ elif page == "Transactions":
                             with st.spinner("Asking AI to categorize and name transactions..."):
                                 from rex import enrich_transactions
                                 descriptions = parsed_df["description"].astype(str).tolist()
+                                _dev_log(f"Import started: {len(descriptions)} transactions for account_id={acct_id}")
 
                                 # Check merchant rules first; only AI-enrich what's not covered
                                 rule_names = {}
@@ -704,12 +724,19 @@ elif page == "Transactions":
                                     else:
                                         need_ai_idx.append(i)
 
+                                _dev_log(f"Rule matches: {len(rule_names)} | Sending to AI: {len(need_ai_idx)}")
                                 ai_results = {}
                                 if need_ai_idx:
                                     ai_batch = [descriptions[i] for i in need_ai_idx]
-                                    enriched = enrich_transactions(ai_batch)
-                                    for list_pos, orig_idx in enumerate(need_ai_idx):
-                                        ai_results[orig_idx] = enriched[list_pos]
+                                    _dev_log(f"AI batch sample (first 3): {ai_batch[:3]}")
+                                    try:
+                                        enriched = enrich_transactions(ai_batch)
+                                        _dev_log(f"AI response sample (first 3): {enriched[:3]}")
+                                        for list_pos, orig_idx in enumerate(need_ai_idx):
+                                            ai_results[orig_idx] = enriched[list_pos]
+                                    except Exception as ai_exc:
+                                        _dev_log(f"AI ERROR: {type(ai_exc).__name__}: {ai_exc}")
+                                        raise
 
                             stmt_id = None
                             if stmt_meta:
@@ -752,6 +779,9 @@ elif page == "Transactions":
                             st.rerun()
 
                         except Exception as exc:
+                            import traceback
+                            _dev_log(f"IMPORT FAILED: {type(exc).__name__}: {exc}")
+                            _dev_log(traceback.format_exc())
                             st.error(f"Import failed: {exc}")
 
                     else:
