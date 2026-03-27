@@ -38,6 +38,9 @@ page = st.sidebar.radio(
 )
 
 st.sidebar.divider()
+dev_mode = st.sidebar.toggle("Dev Mode", value=False)
+
+st.sidebar.divider()
 if st.sidebar.button("Quit Rex", type="secondary"):
     import signal, os
     st.sidebar.success("Rex is shutting down...")
@@ -220,17 +223,12 @@ elif page == "Accounts":
                 if statements:
                     st.caption("Statement History")
                     for s in statements:
-                        sc1, sc2, sc3, sc4, sc5, sc6 = st.columns([3, 2, 2, 2, 2, 1])
+                        sc1, sc2, sc3, sc4, sc5 = st.columns([3, 2, 2, 2, 2])
                         sc1.write(f"{s['opening_date']} → {s['closing_date']}")
                         sc2.write(f"Open: ${s['opening_balance']:,.2f}")
                         sc3.write(f"Charges: ${s['total_charges']:,.2f}")
                         sc4.write(f"Payments: ${s['total_credits']:,.2f}")
                         sc5.write(f"Close: ${s['closing_balance']:,.2f}")
-                        if sc6.button("🗑", key=f"del_stmt_{s['id']}", help="Delete this import"):
-                            count = db.delete_import(s["id"])
-                            db.save_net_worth_snapshot()
-                            st.success(f"Deleted import ({count} transactions removed).")
-                            st.rerun()
     else:
         st.info("No accounts yet. Add one above.")
 
@@ -337,7 +335,12 @@ elif page == "Transactions":
     accounts = db.get_accounts()
     account_map = {a["name"]: a["id"] for a in accounts}
 
-    tab1, tab2, tab3, tab4 = st.tabs(["View & Edit", "Add Transaction", "Categories", "Import"])
+    tab_labels = ["View & Edit", "Add Transaction", "Categories", "Import"]
+    if dev_mode:
+        tab_labels.append("Import Log")
+    tabs = st.tabs(tab_labels)
+    tab1, tab2, tab3, tab4 = tabs[0], tabs[1], tabs[2], tabs[3]
+    tab5 = tabs[4] if dev_mode else None
 
     with tab1:
         fc1, fc2 = st.columns([2, 2])
@@ -679,6 +682,25 @@ elif page == "Transactions":
                 st.session_state.pop("csv_acct_id", None)
                 st.session_state.pop("csv_imported", None)
                 st.session_state.pop("stmt_meta", None)
+
+    if dev_mode and tab5:
+        with tab5:
+            st.subheader("Import Log")
+            imports = db.get_all_imports()
+            if not imports:
+                st.info("No imports yet.")
+            else:
+                for imp in imports:
+                    c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 1])
+                    c1.write(f"**{imp['account_name']}** · {imp['opening_date']} → {imp['closing_date']}")
+                    c2.write(f"Open: ${imp['opening_balance']:,.2f}")
+                    c3.write(f"Charges: ${imp['total_charges']:,.2f} · Credits: ${imp['total_credits']:,.2f}")
+                    c4.write(f"Close: ${imp['closing_balance']:,.2f} · {imp['txn_count']} txns")
+                    if c5.button("Delete", key=f"log_del_{imp['id']}", type="secondary"):
+                        count = db.delete_import(imp["id"])
+                        db.save_net_worth_snapshot()
+                        st.success(f"Deleted — {count} transactions removed.")
+                        st.rerun()
 
 # ---------------------------------------------------------------------------
 # GOALS

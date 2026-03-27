@@ -148,13 +148,15 @@ def init_db() -> None:
 # ---------------------------------------------------------------------------
 
 def get_accounts() -> list[dict]:
-    """Return accounts; balance = closing balance of most recent statement."""
+    """Return accounts; balance = most recent statement closing balance, else SUM of transactions."""
     conn = get_connection()
     rows = conn.execute("""
         SELECT a.id, a.name, a.type, a.institution, a.currency, a.scope, a.created_at,
                COALESCE(
                    (SELECT s.closing_balance FROM statements s
                     WHERE s.account_id = a.id ORDER BY s.closing_date DESC LIMIT 1),
+                   (SELECT ROUND(COALESCE(SUM(t.amount), 0), 2) FROM transactions t
+                    WHERE t.account_id = a.id),
                    0.0
                ) AS balance
         FROM accounts a
@@ -226,16 +228,61 @@ def get_latest_statement_closing_balance(account_id: int) -> float:
 
 
 def delete_import(statement_id: int) -> int:
-    """Delete a statement and all transactions linked to it. Returns number of transactions deleted."""
+    """
+    Delete a statement and all its transactions.
+    Handles both linked transactions (statement_id FK) and legacy unlinked
+    transactions (imported before FK existed) via date-range fallback.
+    Returns number of transactions deleted.
+    """
     conn = get_connection()
-    conn.execute("PRAGMA foreign_keys = ON")
-    row = conn.execute("SELECT COUNT(*) FROM transactions WHERE statement_id=?", (statement_id,)).fetchone()
-    txn_count = row[0] if row else 0
+    stmt = conn.execute(
+        "SELECT account_id, opening_date, closing_date FROM statements WHERE id=?",
+        (statement_id,),
+    ).fetchone()
+    if not stmt:
+        conn.close()
+        return 0
+
+    # Delete transactions directly linked by FK
     conn.execute("DELETE FROM transactions WHERE statement_id=?", (statement_id,))
+
+    # Also delete legacy unlinked transactions in the same account + date range
+    conn.execute(
+        "DELETE FROM transactions WHERE account_id=? AND statement_id IS NULL "
+        "AND date >= ? AND date <= ?",
+        (stmt["account_id"], stmt["opening_date"], stmt["closing_date"]),
+    )
+
+    row = conn.execute(
+        "SELECT changes()",
+    ).fetchone()
+    txn_count = row[0] if row else 0
+
     conn.execute("DELETE FROM statements WHERE id=?", (statement_id,))
     conn.commit()
     conn.close()
     return txn_count
+
+
+def get_all_imports() -> list[dict]:
+    """Return all statement imports across all accounts, newest first, with transaction counts."""
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT s.id, s.account_id, a.name AS account_name, a.type AS account_type,
+               s.opening_date, s.closing_date,
+               s.opening_balance, s.closing_balance,
+               s.total_charges, s.total_credits,
+               (SELECT COUNT(*) FROM transactions t
+                WHERE t.statement_id = s.id
+                   OR (t.account_id = s.account_id AND t.statement_id IS NULL
+                       AND t.date >= s.opening_date AND t.date <= s.closing_date)
+               ) AS txn_count
+        FROM statements s
+        JOIN accounts a ON a.id = s.account_id
+        ORDER BY s.closing_date DESC, a.name
+    """).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 
 def delete_account(account_id: int) -> None:
@@ -313,12 +360,14 @@ def save_net_worth_snapshot() -> None:
     """Calculate current net worth from accounts + assets and save a snapshot."""
     conn = get_connection()
 
-    # Liquid accounts — balance from most recent statement
+    # Liquid accounts — balance from most recent statement, else SUM of transactions
     acct_rows = conn.execute("""
         SELECT a.type,
                COALESCE(
                    (SELECT s.closing_balance FROM statements s
                     WHERE s.account_id = a.id ORDER BY s.closing_date DESC LIMIT 1),
+                   (SELECT ROUND(COALESCE(SUM(t.amount), 0), 2) FROM transactions t
+                    WHERE t.account_id = a.id),
                    0.0
                ) AS balance
         FROM accounts a
@@ -678,12 +727,14 @@ def get_financial_data() -> dict:
     """
     income_expense_df = pd.read_sql_query(income_expense_query, conn)
 
-    # --- Account balances (from most recent statement) ---
+    # --- Account balances (from most recent statement, else SUM of transactions) ---
     account_query = """
         SELECT a.name, a.type,
                COALESCE(
                    (SELECT s.closing_balance FROM statements s
                     WHERE s.account_id = a.id ORDER BY s.closing_date DESC LIMIT 1),
+                   (SELECT ROUND(COALESCE(SUM(t.amount), 0), 2) FROM transactions t
+                    WHERE t.account_id = a.id),
                    0.0
                ) AS balance
         FROM accounts a
