@@ -405,17 +405,44 @@ elif page == "Transactions":
     accounts = db.get_accounts()
     account_map = {a["name"]: a["id"] for a in accounts}
 
-    tab_labels = ["View & Edit", "Add Transaction", "Categories", "Import"]
+    tab_labels = ["View & Edit", "Categories", "Import"]
     if dev_mode:
         tab_labels.append("Import Log")
     tabs = st.tabs(tab_labels)
-    tab1, tab2, tab3, tab4 = tabs[0], tabs[1], tabs[2], tabs[3]
-    tab5 = tabs[4] if dev_mode else None
+    tab1, tab3, tab4 = tabs[0], tabs[1], tabs[2]
+    tab5 = tabs[3] if dev_mode else None
 
     with tab1:
-        fc1, fc2 = st.columns([2, 2])
+        fc1, fc2, fc3 = st.columns([2, 2, 1])
         filter_acct = fc1.selectbox("Filter by Account", ["All"] + [a["name"] for a in accounts])
         filter_cat = fc2.selectbox("Filter by Category", ["All"] + db.get_categories())
+        with fc3:
+            st.markdown("<div style='padding-top:4px'></div>", unsafe_allow_html=True)
+            if st.button("＋ Add", use_container_width=True):
+                st.session_state["show_add_txn"] = not st.session_state.get("show_add_txn", False)
+
+        if st.session_state.get("show_add_txn"):
+            with st.form("add_txn"):
+                fa1, fa2 = st.columns(2)
+                add_acct = fa1.selectbox("Account", [a["name"] for a in accounts])
+                add_date = fa2.date_input("Date", value=datetime.today())
+                add_desc = fa1.text_input("Description")
+                add_amt  = fa2.number_input("Amount (negative = expense)", value=0.0, step=0.01, format="%.2f")
+                cat_options = db.get_categories()
+                add_cat  = st.selectbox("Category", cat_options, index=cat_options.index("Uncategorized") if "Uncategorized" in cat_options else 0)
+                add_note = st.text_input("Notes (optional)")
+                a1, a2 = st.columns(2)
+                if a1.form_submit_button("Add Transaction", use_container_width=True):
+                    if not add_desc:
+                        st.error("Description is required.")
+                    else:
+                        db.insert_transaction(account_map[add_acct], add_date.strftime("%Y-%m-%d"), add_desc, add_amt, add_cat, add_note)
+                        st.session_state["show_add_txn"] = False
+                        st.success("Transaction added.")
+                        st.rerun()
+                if a2.form_submit_button("Cancel", use_container_width=True):
+                    st.session_state["show_add_txn"] = False
+                    st.rerun()
         acct_id_filter = account_map.get(filter_acct) if filter_acct != "All" else None
         txns = db.get_transactions(account_id=acct_id_filter, limit=2000)
 
@@ -515,32 +542,6 @@ elif page == "Transactions":
                     st.rerun()
         else:
             st.info("No transactions yet.")
-
-    with tab2:
-        if not accounts:
-            st.warning("Add an account first.")
-        else:
-            with st.form("add_txn"):
-                c1, c2 = st.columns(2)
-                acct_name = c1.selectbox("Account", [a["name"] for a in accounts])
-                txn_date = c2.date_input("Date", value=datetime.today())
-                description = c1.text_input("Description")
-                amount = c2.number_input("Amount ($) — negative for expenses", value=0.0, step=0.01, format="%.2f")
-                cat_options = db.get_categories()
-                category = st.selectbox("Category", cat_options, index=cat_options.index("Uncategorized"))
-                notes = st.text_input("Notes (optional)")
-                submitted = st.form_submit_button("Add Transaction")
-                if submitted:
-                    if not description:
-                        st.error("Description is required.")
-                    else:
-                        acct_id = account_map[acct_name]
-                        db.insert_transaction(
-                            acct_id, txn_date.strftime("%Y-%m-%d"),
-                            description, amount, category, notes
-                        )
-                        st.success("Transaction added.")
-                        st.rerun()
 
     with tab3:
         st.subheader("Manage Categories")
