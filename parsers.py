@@ -1,6 +1,44 @@
 import pandas as pd
 import re
+from datetime import datetime
 from typing import Optional
+
+# ---------------------------------------------------------------------------
+# Description normalization for merchant rule matching
+# ---------------------------------------------------------------------------
+
+_PREFIX_RE = re.compile(
+    r"^(EFT PMT|ACH PMT|ACH|POS|DEBIT CARD|CREDIT CARD|CHECKCARD|CHECK CARD|"
+    r"ONLINE PMT|ONLINE PAYMENT|BILL PAY|BILL PAYMENT|RECURRING PMT|RECURRING|"
+    r"PREAUTH|PRE-AUTH|PREAUTHORIZED|PYMT|PAYMENT|PURCHASE|ORIG CO NAME:?\s*|"
+    r"SYF PAYMNT|SYF|PAYMNT|PMT)\s+",
+    re.IGNORECASE,
+)
+
+_SUFFIX_RE = re.compile(r"[\s\dX#\*]{4,}$")
+
+
+def normalize_description(desc: str) -> str:
+    """
+    Strip common banking prefixes and trailing masked account/card numbers
+    so the meaningful merchant name remains for pattern matching.
+
+    Example:
+      "EFT PMT AMAZON CORP SYF PAYMNT XXXXXXXXXXX9053" → "AMAZON CORP"
+      "EFT PMT GREENLIGHT APP XXXXXXXXXXXIGHT"          → "GREENLIGHT APP"
+    """
+    s = desc.strip()
+    # Strip prefixes up to 4 passes (some descriptions stack multiple prefixes)
+    for _ in range(4):
+        new_s = _PREFIX_RE.sub("", s).strip()
+        if new_s == s:
+            break
+        s = new_s
+    # Strip trailing masked numbers / X sequences (min 4 chars to avoid false strips)
+    s = _SUFFIX_RE.sub("", s).strip()
+    # Collapse internal whitespace
+    s = re.sub(r"\s+", " ", s)
+    return s.upper()
 
 # ---------------------------------------------------------------------------
 # Keyword → Category mapping
@@ -213,6 +251,90 @@ def _normalise_columns(df: pd.DataFrame) -> pd.DataFrame:
                 rename_map[lower_cols[alias]] = canonical
                 break
     return df.rename(columns=rename_map)
+
+
+def parse_chase_pdf(filepath: str, account_id: int) -> pd.DataFrame:
+    """
+    Parse a Chase credit card PDF statement into a normalised DataFrame.
+
+    Returns a DataFrame with columns: date, description, amount, account_id.
+    Amounts are signed: negative = payment/credit, positive = charge.
+    """
+    try:
+        import pdfplumber
+    except ImportError:
+        raise ValueError("pdfplumber is required to parse PDFs. Run: pip3 install pdfplumber")
+
+    try:
+        pdf = pdfplumber.open(filepath)
+    except Exception as exc:
+        raise ValueError(f"Could not open PDF: {exc}") from exc
+
+    # Extract all text across pages
+    full_text = ""
+    with pdf:
+        for page in pdf.pages:
+            text = page.extract_text() or ""
+            full_text += text + "\n"
+
+    # Detect statement year from "Opening/Closing Date MM/DD/YY - MM/DD/YY"
+    year_match = re.search(r"Opening/Closing Date\s+\d{2}/\d{2}/(\d{2,4})", full_text, re.IGNORECASE)
+    if year_match:
+        yr = year_match.group(1)
+        stmt_year = int(yr) if len(yr) == 4 else 2000 + int(yr)
+    else:
+        stmt_year = datetime.now().year
+
+    # Find the ACCOUNT ACTIVITY section (Chase PDFs may double every character in headers)
+    activity_match = re.search(r"A+C+O+U+N+T+\s+A+C+T+I+V+I+T+Y+", full_text, re.IGNORECASE)
+    if not activity_match:
+        raise ValueError("Could not find ACCOUNT ACTIVITY section in the PDF.")
+
+    activity_text = full_text[activity_match.end():]
+
+    # Stop when we hit summary/totals lines that follow the transaction list
+    stop_match = re.search(
+        r"(TRANSACTIONS THIS CYCLE|Year-to-Date|INTEREST CHARGES\n|IINNTTEERREESSTT|YEAR-TO-DATE TOTALS)",
+        activity_text, re.IGNORECASE
+    )
+    if stop_match:
+        activity_text = activity_text[: stop_match.start()]
+
+    # Match transaction lines: MM/DD <description> <amount>
+    # Amount may be negative (payments) e.g. -5,000.00 or positive 22.26 or .66
+    txn_re = re.compile(
+        r"^(\d{2}/\d{2})\s+(.+?)\s+(-?[\d,]*\.\d{2})\s*$",
+        re.MULTILINE,
+    )
+
+    # Determine closing month for year-rollover detection (e.g. Jan statement has Dec txns)
+    closing_month_match = re.search(r"Opening/Closing Date\s+\d{2}/\d{2}/\d{2,4}\s*-\s*(\d{2})/", full_text, re.IGNORECASE)
+    closing_month = int(closing_month_match.group(1)) if closing_month_match else 12
+
+    rows = []
+    for m in txn_re.finditer(activity_text):
+        date_str = m.group(1)   # MM/DD
+        desc = m.group(2).strip()
+        amt_str = m.group(3).replace(",", "")
+
+        # If transaction month is after the closing month, it's from the prior year
+        mm = int(date_str.split("/")[0])
+        year = stmt_year if mm <= closing_month else stmt_year - 1
+
+        full_date = f"{year}-{date_str.replace('/', '-')}"
+        try:
+            full_date = pd.to_datetime(full_date, format="%Y-%m-%d").strftime("%Y-%m-%d")
+        except Exception:
+            pass
+
+        amount = float(amt_str)
+        rows.append({"date": full_date, "description": desc, "amount": amount, "account_id": account_id})
+
+    if not rows:
+        raise ValueError("No transactions found in the PDF. The statement format may not be supported.")
+
+    df = pd.DataFrame(rows)
+    return df
 
 
 def parse_csv(filepath: str, account_id: int) -> pd.DataFrame:
