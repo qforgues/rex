@@ -626,6 +626,28 @@ def set_transaction_excluded(txn_id: int, excluded: bool) -> None:
     conn.close()
 
 
+def get_statement_transactions(statement_id: int) -> list[dict]:
+    """Return all transactions for a given statement, ordered by date."""
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT * FROM transactions WHERE statement_id=? ORDER BY date",
+        (statement_id,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def bulk_update_merchant_name(description: str, merchant_name: str) -> None:
+    """Update merchant_name for every transaction matching this raw description."""
+    conn = get_connection()
+    conn.execute(
+        "UPDATE transactions SET merchant_name=? WHERE description=?",
+        (merchant_name.strip(), description),
+    )
+    conn.commit()
+    conn.close()
+
+
 def update_transaction_merchant_name(txn_id: int, merchant_name: str) -> None:
     conn = get_connection()
     conn.execute(

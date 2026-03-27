@@ -619,6 +619,71 @@ elif page == "Transactions":
         else:
             import tempfile, os, hashlib
 
+            # ── Name Review state (shown instead of uploader after import) ────
+            if "review_stmt_id" in st.session_state:
+                stmt_id = st.session_state["review_stmt_id"]
+                inserted = st.session_state.get("review_inserted", 0)
+                txns = db.get_statement_transactions(stmt_id)
+
+                # Group by unique description → current merchant_name
+                seen = {}
+                for t in txns:
+                    d = t["description"]
+                    if d not in seen:
+                        seen[d] = {"merchant_name": t["merchant_name"] or "", "has_rule": bool(db.find_matching_rule(d))}
+
+                needs_review = {d: v for d, v in seen.items() if not v["has_rule"]}
+                auto_names   = {d: v for d, v in seen.items() if  v["has_rule"]}
+
+                st.markdown(f"**Review {inserted} imported transactions** — confirm or edit names below, then they'll auto-apply next time.")
+
+                if needs_review:
+                    st.caption(f"{len(needs_review)} AI-guessed names need confirmation")
+                    for desc, info in needs_review.items():
+                        rc1, rc2, rc3 = st.columns([3, 3, 1])
+                        rc1.markdown(f"<small style='color:#888'>{desc[:55]}</small>", unsafe_allow_html=True)
+                        new_name = rc2.text_input("", value=info["merchant_name"], key=f"rev_{desc}", label_visibility="collapsed")
+                        if rc3.button("✓", key=f"conf_{desc}", help="Confirm and save as rule"):
+                            from parsers import normalize_description
+                            db.add_merchant_rule(normalize_description(desc), new_name.strip() or info["merchant_name"])
+                            db.bulk_update_merchant_name(desc, new_name.strip() or info["merchant_name"])
+                            db.save_net_worth_snapshot()
+                            st.rerun()
+                else:
+                    # All confirmed — show category summary
+                    st.success(f"✅ All names confirmed — {inserted} transactions imported")
+                    cat_summary = {}
+                    for t in txns:
+                        cat = t["category"] or "Uncategorized"
+                        cat_summary.setdefault(cat, {"count": 0, "total": 0.0})
+                        cat_summary[cat]["count"] += 1
+                        cat_summary[cat]["total"] += t["amount"]
+
+                    rows_html = ""
+                    for cat, s in sorted(cat_summary.items(), key=lambda x: -abs(x[1]["total"])):
+                        color = "#e74c3c" if s["total"] < 0 else "#2ecc71"
+                        rows_html += (
+                            f"<div style='display:grid;grid-template-columns:2fr 1fr 1fr;"
+                            f"padding:5px 8px;border-top:1px solid #222;font-size:0.85rem'>"
+                            f"<span>{cat}</span>"
+                            f"<span style='color:#888'>{s['count']} txns</span>"
+                            f"<span style='color:{color};text-align:right'>${s['total']:,.2f}</span>"
+                            f"</div>"
+                        )
+                    st.markdown(
+                        f"<div style='border:1px solid #333;border-radius:6px;margin:10px 0'>"
+                        f"<div style='display:grid;grid-template-columns:2fr 1fr 1fr;padding:4px 8px;"
+                        f"font-size:0.68rem;color:#666;text-transform:uppercase'>"
+                        f"<span>Category</span><span>Count</span><span style='text-align:right'>Total</span></div>"
+                        f"{rows_html}</div>",
+                        unsafe_allow_html=True,
+                    )
+                    if st.button("Done ✓", type="primary"):
+                        st.session_state.pop("review_stmt_id", None)
+                        st.session_state.pop("review_inserted", None)
+                        st.rerun()
+                st.stop()
+
             # Success message lives outside the uploader block so it survives widget reset
             if st.session_state.get("import_success_msg"):
                 st.success(st.session_state.pop("import_success_msg"))
@@ -763,7 +828,8 @@ elif page == "Transactions":
                                 src_hash = all_hashes[i]
                                 if i in rule_names:
                                     mname = rule_names[i]
-                                    category = "Uncategorized"
+                                    r = ai_results.get(i, {})
+                                    category = r.get("category") or "Uncategorized"
                                 else:
                                     r = ai_results.get(i, {})
                                     mname = r.get("name") or str(row["description"])
@@ -781,10 +847,9 @@ elif page == "Transactions":
                                     linked += 1
 
                             db.save_net_worth_snapshot()
-                            msg = f"✅ Imported {inserted} transactions."
-                            if linked:
-                                msg += f" ({linked} already existed — linked to statement)"
-                            st.session_state["import_success_msg"] = msg
+                            # Go to name review instead of straight success
+                            st.session_state["review_stmt_id"] = stmt_id
+                            st.session_state["review_inserted"] = inserted
                             for k in ["csv_file_key", "csv_df", "csv_acct_id", "stmt_meta"]:
                                 st.session_state.pop(k, None)
                             st.session_state["uploader_key"] = st.session_state.get("uploader_key", 0) + 1
