@@ -174,49 +174,41 @@ elif page == "Accounts":
 
     accounts = db.get_accounts()
 
-    # Add account form
+    ACCT_TYPES = ["Checking", "Savings", "Credit Card", "Investment", "Loan", "Other"]
+
     with st.expander("➕ Add Account", expanded=not accounts):
         with st.form("add_account"):
-            c1, c2 = st.columns(2)
-            name = c1.text_input("Account Name")
-            acct_type = c2.selectbox("Type", ["Checking", "Savings", "Credit Card", "Investment", "Loan", "Other"])
-            institution = c1.text_input("Institution")
-            balance = c2.number_input("Current Balance ($)", value=0.0, step=0.01, format="%.2f")
-            currency = st.selectbox("Currency", ["USD", "CAD", "EUR", "GBP"])
-            submitted = st.form_submit_button("Add Account")
-            if submitted:
+            c1, c2, c3 = st.columns([3, 2, 2])
+            name = c1.text_input("Name")
+            acct_type = c2.selectbox("Type", ACCT_TYPES)
+            institution = c3.text_input("Institution")
+            if st.form_submit_button("Add Account", use_container_width=True):
                 if not name:
                     st.error("Account name is required.")
                 else:
-                    db.add_account(name, acct_type, institution, balance, currency)
+                    db.add_account(name, acct_type, institution)
                     db.save_net_worth_snapshot()
-                    st.success(f"Account '{name}' added.")
+                    st.success(f"'{name}' added.")
                     st.rerun()
 
     if accounts:
-        st.subheader("Your Accounts")
         for acct in accounts:
-            with st.expander(f"{acct['name']} — {acct['type']} — ${acct['balance']:,.2f}"):
+            label = f"**{acct['name']}** &nbsp; {acct['type']} &nbsp;·&nbsp; {acct['institution'] or '—'} &nbsp;·&nbsp; ${acct['balance']:,.2f}"
+            with st.expander(label):
                 with st.form(f"edit_acct_{acct['id']}"):
-                    c1, c2 = st.columns(2)
+                    c1, c2, c3 = st.columns([3, 2, 2])
                     new_name = c1.text_input("Name", value=acct["name"])
-                    new_type = c2.selectbox("Type", ["Checking", "Savings", "Credit Card", "Investment", "Loan", "Other"],
-                                            index=["Checking", "Savings", "Credit Card", "Investment", "Loan", "Other"].index(acct["type"]) if acct["type"] in ["Checking", "Savings", "Credit Card", "Investment", "Loan", "Other"] else 0)
-                    new_inst = c1.text_input("Institution", value=acct["institution"] or "")
-                    new_bal = c2.number_input("Balance ($)", value=float(acct["balance"]), step=0.01, format="%.2f")
-                    new_cur = st.selectbox("Currency", ["USD", "CAD", "EUR", "GBP"],
-                                           index=["USD", "CAD", "EUR", "GBP"].index(acct["currency"]) if acct["currency"] in ["USD", "CAD", "EUR", "GBP"] else 0)
-                    col_save, col_del = st.columns(2)
-                    save = col_save.form_submit_button("Save Changes")
-                    delete = col_del.form_submit_button("Delete Account", type="secondary")
-                    if save:
-                        db.update_account(acct["id"], new_name, new_type, new_inst, new_bal, new_cur)
+                    new_type = c2.selectbox("Type", ACCT_TYPES,
+                                            index=ACCT_TYPES.index(acct["type"]) if acct["type"] in ACCT_TYPES else 0)
+                    new_inst = c3.text_input("Institution", value=acct["institution"] or "")
+                    cs, cd = st.columns(2)
+                    if cs.form_submit_button("Save", use_container_width=True):
+                        db.update_account(acct["id"], new_name, new_type, new_inst)
                         db.save_net_worth_snapshot()
                         st.success("Updated.")
                         st.rerun()
-                    if delete:
+                    if cd.form_submit_button("Delete", type="secondary", use_container_width=True):
                         db.delete_account(acct["id"])
-                        st.success("Deleted.")
                         st.rerun()
     else:
         st.info("No accounts yet. Add one above.")

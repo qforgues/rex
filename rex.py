@@ -128,7 +128,7 @@ def _categorize_batch(client: anthropic.Anthropic, descriptions: List[str]) -> L
     try:
         payload = json.dumps(descriptions, ensure_ascii=False)
         message = client.messages.create(
-            model="claude-3-haiku-20240307",  # Fast + cheap for bulk categorization
+            model="claude-haiku-4-5-20251001",
             max_tokens=1024,
             system=CATEGORY_SYSTEM_PROMPT,
             messages=[
@@ -185,6 +185,70 @@ def _parse_category_response(raw_text: str, expected_count: int) -> List[str]:
         validated.append("Uncategorized")
 
     return validated
+
+
+# ---------------------------------------------------------------------------
+# AI merchant name suggestions
+# ---------------------------------------------------------------------------
+
+MERCHANT_NAME_SYSTEM_PROMPT = """
+You are a financial transaction merchant name extractor.
+You will receive a JSON array of raw bank/credit card transaction descriptions.
+Return a JSON array of short, clean, human-readable merchant names — one per description, same order.
+
+Rules:
+- Extract only the core brand/merchant name — drop city, state, phone numbers, URLs, invoice numbers, and reference codes
+- Strip banking prefixes: EFT PMT, ACH, POS, SYF PAYMNT, CHECKCARD, ORIG CO NAME, PREAUTH, etc.
+- Strip trailing masked numbers (Xs, asterisks, trailing digits)
+- Use the well-known brand name, not the legal entity: "ChatGPT" not "Openai Chatgpt Subscr", "T-Mobile" not "Tmobile Auto Pay", "GitHub" not "Github Inc"
+- For credit card payments ("Payment Thank You", "Autopay", "Online Payment"), return "Credit Card Payment"
+- For foreign transaction fees, return "Foreign Transaction Fee"
+- For interest charges, return "Interest Charge"
+- Title-case the result
+- Never return an empty string — always best-guess
+- Return ONLY a valid JSON array of strings, nothing else
+
+Example input:  ["OPENAI *CHATGPT SUBSCR OPENAI.COM CA", "TMOBILE*AUTO PAY 800-937-8997 WA", "Payment Thank You-Mobile", "DNH*GODADDY#4015140893 AMSTERDAM", "AIRBNB * HMKYFYFM55 AIRBNB.COM CA"]
+Example output: ["ChatGPT", "T-Mobile", "Credit Card Payment", "GoDaddy", "Airbnb"]
+"""
+
+
+def get_ai_merchant_names(descriptions: List[str]) -> List[str]:
+    """
+    Use AI to suggest friendly merchant names for raw bank descriptions.
+    Returns one name per description. Falls back to the raw description on failure.
+    """
+    if not descriptions:
+        return []
+
+    client = _get_client()
+    results: List[str] = []
+
+    for batch_start in range(0, len(descriptions), _BATCH_SIZE):
+        batch = descriptions[batch_start : batch_start + _BATCH_SIZE]
+        try:
+            payload = json.dumps(batch, ensure_ascii=False)
+            message = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=1024,
+                system=MERCHANT_NAME_SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": payload}],
+            )
+            raw = message.content[0].text.strip()
+            cleaned = re.sub(r"```(?:json)?\s*", "", raw).strip().rstrip("`").strip()
+            parsed = json.loads(cleaned)
+            if isinstance(parsed, list):
+                names = [str(item).strip() if item else batch[i] for i, item in enumerate(parsed[:len(batch)])]
+                while len(names) < len(batch):
+                    names.append(batch[len(names)])
+                results.extend(names)
+            else:
+                results.extend(batch)
+        except Exception as exc:
+            print(f"[rex.get_ai_merchant_names] failed: {exc}")
+            results.extend(batch)
+
+    return results
 
 
 # ---------------------------------------------------------------------------

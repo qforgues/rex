@@ -35,11 +35,30 @@ def init_db() -> None:
             account_id      INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
             date            TEXT    NOT NULL,
             description     TEXT    NOT NULL,
+            merchant_name   TEXT,
             amount          REAL    NOT NULL,
             category        TEXT    DEFAULT 'Uncategorized',
             notes           TEXT,
             source_hash     TEXT    UNIQUE,
             created_at      TEXT    DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS merchant_rules (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            pattern       TEXT    NOT NULL UNIQUE,
+            friendly_name TEXT    NOT NULL,
+            created_at    TEXT    DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS assets (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            name        TEXT    NOT NULL,
+            type        TEXT    DEFAULT 'Other',
+            value       REAL    DEFAULT 0.0,
+            liability   REAL    DEFAULT 0.0,
+            notes       TEXT,
+            updated_at  TEXT    DEFAULT (datetime('now')),
+            created_at  TEXT    DEFAULT (datetime('now'))
         );
 
         CREATE TABLE IF NOT EXISTS net_worth_snapshots (
@@ -70,9 +89,42 @@ def init_db() -> None:
             done        INTEGER DEFAULT 0,
             created_at  TEXT DEFAULT (datetime('now'))
         );
+
+        CREATE TABLE IF NOT EXISTS categories (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            name       TEXT NOT NULL UNIQUE,
+            is_default INTEGER DEFAULT 0
+        );
     """)
 
     conn.commit()
+
+    # Migrations
+    for migration in [
+        "ALTER TABLE transactions ADD COLUMN merchant_name TEXT",
+        "ALTER TABLE transactions ADD COLUMN excluded INTEGER DEFAULT 0",
+    ]:
+        try:
+            conn.execute(migration)
+            conn.commit()
+        except Exception:
+            pass
+
+    # Seed default categories if the table is empty
+    defaults = [
+        "Income", "Housing", "Groceries", "Food & Dining", "Transportation",
+        "Gas & Fuel", "Utilities", "Health & Medical", "Health & Fitness",
+        "Entertainment", "Shopping", "Travel", "Education", "Home Improvement",
+        "Transfer", "Interest & Fees", "Investments", "Subscriptions",
+        "Personal Care", "Gifts & Donations", "Uncategorized",
+    ]
+    existing = conn.execute("SELECT COUNT(*) FROM categories").fetchone()[0]
+    if existing == 0:
+        conn.executemany(
+            "INSERT OR IGNORE INTO categories (name, is_default) VALUES (?, 1)",
+            [(c,) for c in defaults],
+        )
+        conn.commit()
     conn.close()
 
 
@@ -81,17 +133,25 @@ def init_db() -> None:
 # ---------------------------------------------------------------------------
 
 def get_accounts() -> list[dict]:
+    """Return accounts with balance computed from imported transactions."""
     conn = get_connection()
-    rows = conn.execute("SELECT * FROM accounts ORDER BY name").fetchall()
+    rows = conn.execute("""
+        SELECT a.id, a.name, a.type, a.institution, a.currency, a.created_at,
+               ROUND(COALESCE(SUM(t.amount), 0), 2) AS balance
+        FROM accounts a
+        LEFT JOIN transactions t ON t.account_id = a.id
+        GROUP BY a.id
+        ORDER BY a.name
+    """).fetchall()
     conn.close()
     return [dict(r) for r in rows]
 
 
-def add_account(name: str, acct_type: str, institution: str, balance: float, currency: str = "USD") -> int:
+def add_account(name: str, acct_type: str, institution: str) -> int:
     conn = get_connection()
     cur = conn.execute(
-        "INSERT INTO accounts (name, type, institution, balance, currency) VALUES (?,?,?,?,?)",
-        (name, acct_type, institution, balance, currency),
+        "INSERT INTO accounts (name, type, institution, balance, currency) VALUES (?,?,?,0.0,'USD')",
+        (name, acct_type, institution),
     )
     conn.commit()
     new_id = cur.lastrowid
@@ -99,11 +159,11 @@ def add_account(name: str, acct_type: str, institution: str, balance: float, cur
     return new_id
 
 
-def update_account(account_id: int, name: str, acct_type: str, institution: str, balance: float, currency: str) -> None:
+def update_account(account_id: int, name: str, acct_type: str, institution: str) -> None:
     conn = get_connection()
     conn.execute(
-        "UPDATE accounts SET name=?, type=?, institution=?, balance=?, currency=? WHERE id=?",
-        (name, acct_type, institution, balance, currency, account_id),
+        "UPDATE accounts SET name=?, type=?, institution=? WHERE id=?",
+        (name, acct_type, institution, account_id),
     )
     conn.commit()
     conn.close()
@@ -179,16 +239,32 @@ def delete_transaction(txn_id: int) -> None:
 # ---------------------------------------------------------------------------
 
 def save_net_worth_snapshot() -> None:
-    """Calculate current net worth from accounts and save a snapshot."""
+    """Calculate current net worth from accounts + assets and save a snapshot."""
     conn = get_connection()
-    rows = conn.execute("SELECT type, balance FROM accounts").fetchall()
-    assets = sum(r["balance"] for r in rows if r["type"] not in ("Credit Card", "Loan"))
-    liabilities = abs(sum(r["balance"] for r in rows if r["type"] in ("Credit Card", "Loan")))
-    net_worth = assets - liabilities
+
+    # Liquid accounts — balance computed from transactions
+    acct_rows = conn.execute("""
+        SELECT a.type, ROUND(COALESCE(SUM(t.amount), 0), 2) AS balance
+        FROM accounts a
+        LEFT JOIN transactions t ON t.account_id = a.id
+        GROUP BY a.id
+    """).fetchall()
+    liquid_assets = sum(r["balance"] for r in acct_rows if r["type"] not in ("Credit Card", "Loan"))
+    liquid_liabilities = abs(sum(r["balance"] for r in acct_rows if r["type"] in ("Credit Card", "Loan")))
+
+    # Physical/investment assets
+    asset_rows = conn.execute("SELECT value, liability FROM assets").fetchall()
+    asset_values = sum(r["value"] for r in asset_rows)
+    asset_liabilities = sum(r["liability"] for r in asset_rows)
+
+    total_assets = liquid_assets + asset_values
+    total_liabilities = liquid_liabilities + asset_liabilities
+    net_worth = total_assets - total_liabilities
+
     today = datetime.now().strftime("%Y-%m-%d")
     conn.execute(
-        "INSERT INTO net_worth_snapshots (snapshot_date, total_assets, total_liabilities, net_worth) VALUES (?,?,?,?)",
-        (today, assets, liabilities, net_worth),
+        "INSERT OR REPLACE INTO net_worth_snapshots (snapshot_date, total_assets, total_liabilities, net_worth) VALUES (?,?,?,?)",
+        (today, total_assets, total_liabilities, net_worth),
     )
     conn.commit()
     conn.close()
@@ -286,6 +362,185 @@ def delete_reminder(reminder_id: int) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Categories
+# ---------------------------------------------------------------------------
+
+def get_categories() -> list[str]:
+    """Return all category names sorted alphabetically."""
+    conn = get_connection()
+    rows = conn.execute("SELECT name FROM categories ORDER BY name ASC").fetchall()
+    conn.close()
+    return [r["name"] for r in rows]
+
+
+def add_category(name: str) -> bool:
+    """Add a new category. Returns True if inserted, False if it already exists."""
+    conn = get_connection()
+    try:
+        conn.execute("INSERT INTO categories (name, is_default) VALUES (?, 0)", (name,))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+
+def delete_category(name: str) -> None:
+    """Delete a custom category. Also resets any transactions using it to Uncategorized."""
+    conn = get_connection()
+    conn.execute("UPDATE transactions SET category='Uncategorized' WHERE category=?", (name,))
+    conn.execute("DELETE FROM categories WHERE name=? AND is_default=0", (name,))
+    conn.commit()
+    conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Merchant Rules
+# ---------------------------------------------------------------------------
+
+def get_merchant_rules() -> list[dict]:
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT * FROM merchant_rules ORDER BY friendly_name ASC"
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def find_matching_rule(description: str) -> Optional[str]:
+    """
+    Normalize the description and return the best-matching friendly_name,
+    or None if no rule matches.
+    Best match = longest stored pattern that is a substring of the normalized description.
+    """
+    from parsers import normalize_description
+    normalized = normalize_description(description)
+    rules = get_merchant_rules()
+    best_name = None
+    best_len = 0
+    for rule in rules:
+        pattern = rule["pattern"].upper()
+        if pattern in normalized and len(pattern) > best_len:
+            best_name = rule["friendly_name"]
+            best_len = len(pattern)
+    return best_name
+
+
+def add_merchant_rule(pattern: str, friendly_name: str) -> bool:
+    """Add a rule. Returns True if inserted, False if pattern already exists."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO merchant_rules (pattern, friendly_name) VALUES (?, ?)",
+            (pattern.upper().strip(), friendly_name.strip()),
+        )
+        conn.commit()
+        return True
+    except Exception:
+        return False
+    finally:
+        conn.close()
+
+
+def update_merchant_rule(rule_id: int, pattern: str, friendly_name: str) -> None:
+    conn = get_connection()
+    conn.execute(
+        "UPDATE merchant_rules SET pattern=?, friendly_name=? WHERE id=?",
+        (pattern.upper().strip(), friendly_name.strip(), rule_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def delete_merchant_rule(rule_id: int) -> None:
+    conn = get_connection()
+    conn.execute("DELETE FROM merchant_rules WHERE id=?", (rule_id,))
+    conn.commit()
+    conn.close()
+
+
+def set_transaction_excluded(txn_id: int, excluded: bool) -> None:
+    conn = get_connection()
+    conn.execute("UPDATE transactions SET excluded=? WHERE id=?", (1 if excluded else 0, txn_id))
+    conn.commit()
+    conn.close()
+
+
+def update_transaction_merchant_name(txn_id: int, merchant_name: str) -> None:
+    conn = get_connection()
+    conn.execute(
+        "UPDATE transactions SET merchant_name=? WHERE id=?",
+        (merchant_name.strip() if merchant_name else None, txn_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_transactions_needing_review(source_hashes: list[str]) -> list[dict]:
+    """
+    Given a list of source_hashes, return existing transactions that need review:
+    category is Uncategorized or merchant_name is null.
+    """
+    if not source_hashes:
+        return []
+    conn = get_connection()
+    placeholders = ",".join("?" * len(source_hashes))
+    rows = conn.execute(
+        f"SELECT t.*, a.name as account_name FROM transactions t "
+        f"LEFT JOIN accounts a ON t.account_id = a.id "
+        f"WHERE t.source_hash IN ({placeholders}) "
+        f"AND (t.category = 'Uncategorized' OR t.merchant_name IS NULL OR t.merchant_name = '')",
+        source_hashes,
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Assets
+# ---------------------------------------------------------------------------
+
+ASSET_TYPES = ["Real Estate", "Vehicle", "Investment", "Business", "Personal Property", "Other"]
+
+
+def get_assets() -> list[dict]:
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM assets ORDER BY type, name").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def add_asset(name: str, asset_type: str, value: float, liability: float, notes: str) -> int:
+    conn = get_connection()
+    cur = conn.execute(
+        "INSERT INTO assets (name, type, value, liability, notes) VALUES (?,?,?,?,?)",
+        (name, asset_type, value, liability, notes),
+    )
+    conn.commit()
+    new_id = cur.lastrowid
+    conn.close()
+    return new_id
+
+
+def update_asset(asset_id: int, name: str, asset_type: str, value: float, liability: float, notes: str) -> None:
+    conn = get_connection()
+    conn.execute(
+        "UPDATE assets SET name=?, type=?, value=?, liability=?, notes=?, updated_at=datetime('now') WHERE id=?",
+        (name, asset_type, value, liability, notes, asset_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def delete_asset(asset_id: int) -> None:
+    conn = get_connection()
+    conn.execute("DELETE FROM assets WHERE id=?", (asset_id,))
+    conn.commit()
+    conn.close()
+
+
+# ---------------------------------------------------------------------------
 # Dashboard / Financial Data
 # ---------------------------------------------------------------------------
 
@@ -303,14 +558,14 @@ def get_financial_data() -> dict:
     """
     conn = get_connection()
 
-    # --- Monthly expenses (negative amounts = spending) ---
+    # --- Monthly expenses (negative amounts = spending, excluded transactions omitted) ---
     monthly_expenses_query = """
         SELECT
             strftime('%Y-%m', date) AS month,
             category,
             ROUND(SUM(ABS(amount)), 2) AS total
         FROM transactions
-        WHERE amount < 0
+        WHERE amount < 0 AND (excluded IS NULL OR excluded = 0)
         GROUP BY month, category
         ORDER BY month ASC, total DESC
     """
@@ -324,49 +579,52 @@ def get_financial_data() -> dict:
     """
     net_worth_df = pd.read_sql_query(net_worth_query, conn)
 
-    # --- Category totals (all time, expenses only) ---
+    # --- Category totals (all time, expenses only, excluded omitted) ---
     category_query = """
         SELECT
             category,
             ROUND(SUM(ABS(amount)), 2) AS total
         FROM transactions
-        WHERE amount < 0
+        WHERE amount < 0 AND (excluded IS NULL OR excluded = 0)
         GROUP BY category
         ORDER BY total DESC
     """
     category_df = pd.read_sql_query(category_query, conn)
 
-    # --- Monthly income vs expenses ---
+    # --- Monthly income vs expenses (excluded omitted from expenses) ---
     income_expense_query = """
         SELECT
             strftime('%Y-%m', date) AS month,
             ROUND(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 2) AS income,
-            ROUND(SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END), 2) AS expenses
+            ROUND(SUM(CASE WHEN amount < 0 AND (excluded IS NULL OR excluded = 0)
+                          THEN ABS(amount) ELSE 0 END), 2) AS expenses
         FROM transactions
         GROUP BY month
         ORDER BY month ASC
     """
     income_expense_df = pd.read_sql_query(income_expense_query, conn)
 
-    # --- Account balances ---
+    # --- Account balances (computed from transactions) ---
     account_query = """
-        SELECT name, type, ROUND(balance, 2) AS balance
-        FROM accounts
+        SELECT a.name, a.type, ROUND(COALESCE(SUM(t.amount), 0), 2) AS balance
+        FROM accounts a
+        LEFT JOIN transactions t ON t.account_id = a.id
+        GROUP BY a.id
         ORDER BY balance DESC
     """
     account_df = pd.read_sql_query(account_query, conn)
 
-    # --- Top 10 largest expense transactions ---
+    # --- Top 10 largest expense transactions (excluded omitted) ---
     top_txn_query = """
         SELECT
             t.date,
-            t.description,
+            COALESCE(t.merchant_name, t.description) AS name,
             ROUND(ABS(t.amount), 2) AS amount,
             t.category,
             a.name AS account_name
         FROM transactions t
         LEFT JOIN accounts a ON t.account_id = a.id
-        WHERE t.amount < 0
+        WHERE t.amount < 0 AND (t.excluded IS NULL OR t.excluded = 0)
         ORDER BY ABS(t.amount) DESC
         LIMIT 10
     """
