@@ -681,11 +681,9 @@ elif page == "Transactions":
                         st.session_state["csv_imported"] = True
 
             if st.session_state.get("csv_imported"):
-                st.session_state.pop("csv_file_key", None)
-                st.session_state.pop("csv_df", None)
-                st.session_state.pop("csv_acct_id", None)
-                st.session_state.pop("csv_imported", None)
-                st.session_state.pop("stmt_meta", None)
+                for k in ["csv_file_key", "csv_df", "csv_acct_id", "csv_imported", "stmt_meta"]:
+                    st.session_state.pop(k, None)
+                st.rerun()
 
     if dev_mode and tab5:
         with tab5:
