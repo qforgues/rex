@@ -40,6 +40,18 @@ page = st.sidebar.radio(
 st.sidebar.divider()
 dev_mode = st.sidebar.toggle("Dev Mode", value=False)
 
+if dev_mode:
+    st.sidebar.divider()
+    st.sidebar.caption("⚠️ Danger Zone")
+    if st.sidebar.button("Delete All Data", type="secondary"):
+        conn = db.get_connection()
+        conn.execute("DELETE FROM transactions")
+        conn.execute("DELETE FROM statements")
+        conn.execute("DELETE FROM net_worth_snapshots")
+        conn.commit()
+        conn.close()
+        st.sidebar.success("Data wiped.")
+
 st.sidebar.divider()
 if st.sidebar.button("Quit Rex", type="secondary"):
     import signal, os
