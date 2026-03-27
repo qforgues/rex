@@ -1,0 +1,54 @@
+{
+  "card_type": "Visa Card",
+  "identifier_patterns": {
+    "card_number_prefix": "4",
+    "statement_header": "VISA|VISA INC",
+    "date_format": "DD/MM/YYYY|MM/DD/YYYY"
+  },
+  "field_mappings": {
+    "transaction_date": {
+      "patterns": ["Date", "Transaction Date", "Value Date"],
+      "format": "DD/MM/YYYY or MM/DD/YYYY",
+      "position": "column_0"
+    },
+    "merchant": {
+      "patterns": ["Description", "Merchant", "Details"],
+      "format": "text_string",
+      "position": "column_1"
+    },
+    "reference_number": {
+      "patterns": ["Reference", "Ref No", "Transaction ID"],
+      "format": "alphanumeric",
+      "position": "column_2"
+    },
+    "debit_credit": {
+      "patterns": ["Debit", "Credit", "Dr/Cr"],
+      "format": "enum: D|C",
+      "position": "column_3"
+    },
+    "amount": {
+      "patterns": ["Amount", "Transaction Amount"],
+      "format": "currency",
+      "position": "column_last"
+    }
+  },
+  "document_structure": {
+    "header_rows": 4,
+    "data_start_row": 6,
+    "summary_section": "present_at_bottom",
+    "footer_rows": 3,
+    "page_breaks": "present",
+    "balance_forward": "displayed"
+  },
+  "distinctive_features": [
+    "Debit/Credit indicator column",
+    "Balance forward tracking",
+    "International transaction markers",
+    "Reference number for every transaction",
+    "Running balance display",
+    "Multi-currency support"
+  ],
+  "csv_delimiter": "comma_or_pipe",
+  "encoding": "UTF-8",
+  "line_endings": "CRLF"
+}

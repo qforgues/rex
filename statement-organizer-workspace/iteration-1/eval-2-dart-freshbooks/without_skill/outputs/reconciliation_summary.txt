@@ -1,0 +1,124 @@
+====================================================================================================
+DART BANK STATEMENT TO FRESHBOOKS INVOICE RECONCILIATION REPORT
+Generated: 2026-03-23 11:48:26
+====================================================================================================
+
+RECONCILIATION SUMMARY
+----------------------------------------------------------------------------------------------------
+Total Transactions Processed:     13
+Exact Matches (High Confidence):  4
+Probable Matches (Medium):        0
+Ambiguous (Needs Review):         8
+Unmatched Transactions:           1
+Overall Match Confidence:         30.8%
+
+Total Transaction Amount:         $    36141.75
+Matched to Invoices:              $     9500.50
+Unmatched Amount:                 $    26641.25
+
+
+TRANSACTIONS MARKED AS PAID
+(Exact and Probable matches - safe to mark as paid in FreshBooks)
+----------------------------------------------------------------------------------------------------
+TxnID                Date         Merchant                             Amount Invoice            Score
+----------------------------------------------------------------------------------------------------
+DART-20260301-001    2026-03-01   Portal42-Acme Corp             $    2500.00 INV-2026-001      118.7
+DART-20260302-001    2026-03-02   Portal42-TechStart Inc         $    1250.50 INV-2026-002      119.0
+DART-20260305-001    2026-03-05   Portal42-Global Solutions      $    3750.00 INV-2026-003      118.3
+DART-20260310-001    2026-03-10   Portal42-Digital Agency        $    2000.00 INV-2026-005      118.3
+----------------------------------------------------------------------------------------------------
+TOTAL MARKED PAID: $                                                                              9500.50
+
+
+TRANSACTIONS REQUIRING MANUAL REVIEW
+(Ambiguous matches or unmatched - verify before marking as paid)
+----------------------------------------------------------------------------------------------------
+TxnID                Date         Merchant                             Amount Status          Details                                           
+----------------------------------------------------------------------------------------------------
+DART-20260307-001    2026-03-07   Portal42-Innovation Labs       $     890.25 AMBIGUOUS       Score: 68.0 | amount_match: exact | extracted...  
+DART-20260312-001    2026-03-12   Portal42-Creative Studio       $    1500.75 AMBIGUOUS       Score: 68.7 | amount_match: exact | name_scor...  
+DART-20260315-001    2026-03-15   Portal42-DataFlow Systems      $    3200.00 AMBIGUOUS       Score: 68.3 | amount_match: exact | extracted...  
+DART-20260318-001    2026-03-18   Portal42-Marketing Pro         $     950.00 AMBIGUOUS       Score: 68.0 | amount_match: exact | name_scor...  
+DART-20260320-001    2026-03-20   Portal42-CloudTech Solutions   $    4500.00 AMBIGUOUS       Score: 68.3 | amount_match: exact | extracted...  
+DART-20260322-001    2026-03-22   Portal42-Business Dev          $    1850.25 AMBIGUOUS       Score: 68.7 | amount_match: exact | extracted...  
+DART-20260325-001    2026-03-25   Portal42-Growth Partners       $    2250.00 AMBIGUOUS       Score: 68.3 | amount_match: exact | extracted...  
+DART-20260327-001    2026-03-27   Transfer-Internal              $    5000.00 NOT FOUND       Non-Portal42 transaction (transfer/fee)           
+DART-20260328-001    2026-03-28   Portal42-Enterprise Suite      $    6500.00 AMBIGUOUS       Score: 69.0 | amount_match: exact | extracted...  
+----------------------------------------------------------------------------------------------------
+TOTAL REQUIRING REVIEW: $                                                                         26641.25
+
+
+DETAILED REVIEW INFORMATION
+----------------------------------------------------------------------------------------------------
+
+Transaction: DART-20260307-001
+  Date:      2026-03-07
+  Merchant:  Portal42-Innovation Labs
+  Amount:    $890.25
+  Reference: REF-2026-004
+  Status:    AMBIGUOUS
+  Notes:     Score: 68.0 | amount_match: exact | extracted_id: REF-2026-004 | name_score: 1.00 | date_proximity: 6 days after invoice | 2nd: INV-2026-005 (9.3)
+
+Transaction: DART-20260312-001
+  Date:      2026-03-12
+  Merchant:  Portal42-Creative Studio
+  Amount:    $1500.75
+  Reference: 2026-006
+  Status:    AMBIGUOUS
+  Notes:     Score: 68.7 | amount_match: exact | name_score: 1.00 | date_proximity: 4 days after invoice | 2nd: INV-2026-008 (10.0)
+
+Transaction: DART-20260315-001
+  Date:      2026-03-15
+  Merchant:  Portal42-DataFlow Systems
+  Amount:    $3200.00
+  Reference: INV-003
+  Status:    AMBIGUOUS
+  Notes:     Score: 68.3 | amount_match: exact | extracted_id: INV-003 | name_score: 1.00 | date_proximity: 5 days after invoice | 2nd: INV-2026-009 (10.0)
+
+Transaction: DART-20260318-001
+  Date:      2026-03-18
+  Merchant:  Portal42-Marketing Pro
+  Amount:    $950.00
+  Reference: Invoice-2026-007
+  Status:    AMBIGUOUS
+  Notes:     Score: 68.0 | amount_match: exact | name_score: 1.00 | date_proximity: 6 days after invoice | 2nd: INV-2026-010 (10.0)
+
+Transaction: DART-20260320-001
+  Date:      2026-03-20
+  Merchant:  Portal42-CloudTech Solutions
+  Amount:    $4500.00
+  Reference: Invoice 2026-008
+  Status:    AMBIGUOUS
+  Notes:     Score: 68.3 | amount_match: exact | extracted_id: 2026-008 | name_score: 1.00 | date_proximity: 5 days after invoice | 2nd: INV-2026-008 (57.3)
+
+Transaction: DART-20260322-001
+  Date:      2026-03-22
+  Merchant:  Portal42-Business Dev
+  Amount:    $1850.25
+  Reference: REF-2026-009
+  Status:    AMBIGUOUS
+  Notes:     Score: 68.7 | amount_match: exact | extracted_id: REF-2026-009 | name_score: 1.00 | date_proximity: 4 days after invoice | 2nd: INV-2026-012 (10.0)
+
+Transaction: DART-20260325-001
+  Date:      2026-03-25
+  Merchant:  Portal42-Growth Partners
+  Amount:    $2250.00
+  Reference: INV-010
+  Status:    AMBIGUOUS
+  Notes:     Score: 68.3 | amount_match: exact | extracted_id: INV-010 | name_score: 1.00 | date_proximity: 5 days after invoice | 2nd: INV-2026-013 (10.0)
+
+Transaction: DART-20260327-001
+  Date:      2026-03-27
+  Merchant:  Transfer-Internal
+  Amount:    $5000.00
+  Reference: Internal Transfer
+  Status:    NO_MATCH
+  Notes:     Non-Portal42 transaction (transfer/fee)
+
+Transaction: DART-20260328-001
+  Date:      2026-03-28
+  Merchant:  Portal42-Enterprise Suite
+  Amount:    $6500.00
+  Reference: Invoice 2026-011
+  Status:    AMBIGUOUS
+  Notes:     Score: 69.0 | amount_match: exact | extracted_id: 2026-011 | name_score: 1.00 | date_proximity: 3 days after invoice | 2nd: INV-2026-011 (57.3)

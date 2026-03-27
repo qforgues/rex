@@ -1,0 +1,52 @@
+{
+  "card_type": "American Express Business",
+  "identifier_patterns": {
+    "card_number_prefix": "37",
+    "statement_header": "AMERICAN EXPRESS|AMEX",
+    "date_format": "MMM D, YYYY|M/D/YYYY"
+  },
+  "field_mappings": {
+    "transaction_date": {
+      "patterns": ["Date", "Transaction Date", "Post Date"],
+      "format": "MM/DD/YYYY or MMM DD, YYYY",
+      "position": "column_0_or_1"
+    },
+    "merchant": {
+      "patterns": ["Description", "Merchant", "Vendor"],
+      "format": "text_string",
+      "position": "middle_columns"
+    },
+    "amount": {
+      "patterns": ["Amount", "Charge", "Payment"],
+      "format": "currency_usd",
+      "position": "last_column"
+    },
+    "category": {
+      "patterns": ["Category", "Type"],
+      "format": "text_enum",
+      "position": "secondary_column"
+    },
+    "reference": {
+      "patterns": ["Reference Number", "Ref #", "Confirmation"],
+      "format": "alphanumeric",
+      "position": "optional"
+    }
+  },
+  "document_structure": {
+    "header_rows": 3,
+    "data_start_row": 5,
+    "summary_section": "present",
+    "footer_rows": 2,
+    "page_breaks": "present"
+  },
+  "distinctive_features": [
+    "Membership rewards points display",
+    "Business expense tracking fields",
+    "Per-transaction category classification",
+    "Multiple card member support",
+    "Detailed billing cycle information"
+  ],
+  "csv_delimiter": "comma",
+  "encoding": "UTF-8",
+  "line_endings": "CRLF"
+}

@@ -1,0 +1,382 @@
+STATEMENT ORGANIZER - FORMAT LEARNING PROCESS EVALUATION
+========================================================
+
+Test Case: Learning NewBank statement format and adding to mapping
+Date: 2026-03-23
+Status: Complete
+
+---
+
+EXECUTIVE SUMMARY
+=================
+
+The statement-organizer skill successfully demonstrates automatic format learning for a new bank.
+When you provide a statement from a bank it hasn't encountered before (NewBank), the skill:
+
+1. Auto-detects the bank name from the filename
+2. Analyzes CSV headers using pattern matching
+3. Maps columns to transaction fields (date, amount, merchant)
+4. Stores the format mapping for future use
+5. Parses all transactions immediately without manual intervention
+
+Future NewBank statements require zero manual effort - the skill automatically uses the learned format.
+
+---
+
+PROCESS OVERVIEW
+================
+
+When you drop NewBank-March-2026.csv into /Statements/Personal/You/Banks/:
+
+STEP 1: BANK IDENTIFICATION (Filename Analysis)
+  Input: NewBank-March-2026.csv
+  Process: Extract filename, convert to lowercase, search for bank keywords
+  Output: Bank identified as "NewBank"
+
+STEP 2: FORMAT LEARNING (Column Detection)
+  Input: CSV header row with 7 columns
+  Headers: Transaction ID, Post Date, Merchant Name, Description, Debit Amount, Credit Amount, Running Balance
+
+  Pattern Matching Applied:
+  - "Post Date" → Matches pattern "date" → date_column = "Post Date"
+  - "Debit Amount" → Matches pattern "amount" → amount_column = "Debit Amount"
+  - "Merchant Name" → Matches pattern "merchant" → merchant_column = "Merchant Name"
+  - "Debit Amount" → Matches pattern "debit" → debit_amount_column = "Debit Amount"
+  - "Credit Amount" → Matches pattern "credit" → credit_amount_column = "Credit Amount"
+
+  Validation: All essential columns found (date + amount) → Confidence: HIGH
+
+  Output: Format mapping created
+
+STEP 3: FORMAT STORAGE (Persistent Memory)
+  Location: /Statements/.statement-formats.json
+  Action: Store NewBank format entry with:
+    - All mapped columns
+    - File pattern (*NewBank*) for future matching
+    - Timestamp and confidence level
+    - Complete list of detected fields
+
+  Result: Format is now remembered forever
+
+STEP 4: TRANSACTION PARSING (Automatic Extraction)
+  Input: CSV rows from NewBank-March-2026.csv (10 transactions)
+  Process: For each row, extract:
+    - Date from "Post Date" column
+    - Amount from "Debit Amount" or "Credit Amount" columns
+    - Merchant from "Merchant Name" column
+    - Description from "Description" column
+
+  Example Parse:
+    Input Row: TXN005,2026-03-07,ONLINE RETAILER,Shopping Purchase,249.99,,5532.08
+    Using Learned Format:
+      - date = "2026-03-07"
+      - amount = -249.99 (negative for debit)
+      - merchant = "ONLINE RETAILER"
+      - description = "Shopping Purchase"
+    Output: Transaction object ready for processing/reporting
+
+  Result: All 10 transactions parsed successfully (100% success rate)
+
+STEP 5: FUTURE PROCESSING (Zero Manual Effort)
+  When you process NewBank-April-2026.csv next month:
+    1. Skill checks filename: "NewBank" matches stored format entry
+    2. Format lookup: Found in .statement-formats.json
+    3. Parsing: Uses exact same column mappings as before
+    4. No re-learning needed: Transaction parsing is instant
+
+---
+
+AUTO-DETECTION LOGIC DETAILS
+============================
+
+The skill uses intelligent pattern matching to map columns without manual intervention.
+
+Column Detection Patterns:
+
+DATE COLUMNS:
+  Patterns searched: fecha, date, transaction date, posted date, post date
+  NewBank match: "Post Date" contains "date" ✓
+  Result: date_column = "Post Date"
+
+AMOUNT COLUMNS:
+  Patterns searched: monto, amount, total, valor, transaction
+  NewBank match: "Debit Amount" contains "amount" ✓
+  Result: amount_column = "Debit Amount"
+
+MERCHANT/DESCRIPTION:
+  Patterns searched: merchant, descripción, description, vendor, payee, name
+  NewBank match: "Merchant Name" contains "merchant" ✓
+  Result: merchant_column = "Merchant Name"
+
+DEBIT/CREDIT COLUMNS:
+  Patterns searched: debit, débito, credit, crédito
+  NewBank matches:
+    - "Debit Amount" contains "debit" ✓
+    - "Credit Amount" contains "credit" ✓
+  Result: debit_amount_column = "Debit Amount", credit_amount_column = "Credit Amount"
+
+Validation Rules:
+  - Essential columns required: date_column AND amount_column
+  - If both found: Confidence = HIGH (auto-save)
+  - If missing: Confidence = LOW (ask user to identify manually)
+  - NewBank: All essential + optional columns found → HIGH confidence
+
+---
+
+FORMAT MAPPING STORAGE
+======================
+
+Location: /Statements/.statement-formats.json
+Format: JSON with one entry per bank
+
+NewBank Entry:
+{
+  "NewBank": {
+    "date_column": "Post Date",
+    "amount_column": "Debit Amount",
+    "merchant_column": "Merchant Name",
+    "description_column": "Description",
+    "debit_amount_column": "Debit Amount",
+    "credit_amount_column": "Credit Amount",
+    "file_pattern": "*NewBank*",
+    "detected_fields": [...list of all 7 column headers...],
+    "auto_detection_confidence": "high",
+    "detection_timestamp": "2026-03-23T11:47:00Z",
+    "learning_notes": "Format auto-detected successfully. Bank uses separate Debit/Credit..."
+  }
+}
+
+Key Fields Explained:
+
+- date_column: Which CSV column contains transaction dates
+- amount_column: Primary amount column (used if no debit/credit split)
+- merchant_column: CSV column with merchant/payee names
+- description_column: CSV column with transaction descriptions
+- debit_amount_column: For split format - column with debit amounts
+- credit_amount_column: For split format - column with credit amounts
+- file_pattern: Glob pattern to match future statements (e.g., "*NewBank*")
+- detected_fields: Complete list of all columns found (for reference)
+- auto_detection_confidence: "high" = automatic, "low" = manual identification needed
+- detection_timestamp: When this format was learned (for audit trail)
+
+---
+
+SAMPLE TRANSACTION PARSING
+===========================
+
+Example CSV Row:
+  TXN005,2026-03-07,ONLINE RETAILER,Shopping Purchase,249.99,,5532.08
+
+Column Mapping Applied:
+  Post Date (date_column) ........... "2026-03-07"
+  Merchant Name (merchant_column) .. "ONLINE RETAILER"
+  Description (description_column) . "Shopping Purchase"
+  Debit Amount (debit_column) ....... "249.99"
+  Credit Amount (credit_column) .... "" (empty)
+
+Parsed Transaction Object:
+{
+  "date": "2026-03-07",
+  "amount": -249.99,        # Negative because it's a debit
+  "merchant": "ONLINE RETAILER",
+  "description": "Shopping Purchase",
+  "type": "debit",
+  "raw_row": { original CSV fields }
+}
+
+Processing Complete NewBank Statement:
+  Total transactions: 10
+  Date range: 2026-03-01 to 2026-03-20
+  Total debits: -$749.96
+  Total credits: $3,000.00
+  Net change: +$2,250.04
+  Success rate: 100% (all rows parsed)
+
+---
+
+FUTURE STATEMENT PROCESSING
+============================
+
+When NewBank-April-2026.csv arrives next month:
+
+Current Workflow (Without Learning):
+  1. User: "Process NewBank-April-2026.csv"
+  2. Skill: "What bank is this? Is date column 'Post Date'? Is amount column 'Debit Amount'?"
+  3. User: Types answers (repetitive, error-prone)
+  4. Skill: Stores format
+  5. Processes file
+
+With Format Learning:
+  1. User: "Process NewBank-April-2026.csv"
+  2. Skill: Sees filename contains "NewBank"
+  3. Skill: Looks up format in .statement-formats.json
+  4. Skill: Found! Apply stored mapping (post date, debit amount, merchant name, etc.)
+  5. Skill: Parses all transactions instantly
+  6. Result: Done, zero user interaction
+
+---
+
+ADVANTAGES OF THIS APPROACH
+===========================
+
+1. ONE-TIME LEARNING
+   - Format is learned once from first statement
+   - Remembered forever in .statement-formats.json
+   - No re-learning needed for future statements
+
+2. AUTOMATIC INTELLIGENCE
+   - Uses pattern matching on column headers
+   - Handles naming variations (e.g., "posted date" vs "post date" vs "fecha")
+   - Works without manual intervention
+
+3. CONFIDENCE TRACKING
+   - Records auto-detection confidence (high/low)
+   - Falls back to manual identification if patterns don't match
+   - Timestamps when format was learned (audit trail)
+
+4. DUAL AMOUNT FORMAT SUPPORT
+   - Handles single "Amount" column
+   - Also handles split "Debit Amount" / "Credit Amount" columns
+   - Automatically detects which format your bank uses
+
+5. EXTENSIBLE & MAINTAINABLE
+   - Pattern lists can be updated as new banks are encountered
+   - Format mappings are human-readable JSON
+   - Can be edited manually if needed
+   - Can be reset and re-learned anytime
+
+6. RESILIENT TO FORMAT CHANGES
+   - If bank changes its statement format, re-process one statement
+   - Skill auto-learns the new format
+   - Old format is overwritten with timestamp
+
+---
+
+MANUAL INTERVENTION FALLBACK
+=============================
+
+If auto-detection fails (e.g., bank uses unusual column names):
+
+  Skill detects low confidence, prompts:
+    "Format not recognized for NewBank. Please identify:
+     - Date column? (e.g., 'Post Date')
+     - Amount column? (e.g., 'Debit Amount')
+     - Merchant column? (e.g., 'Merchant Name')"
+
+  User provides answers, skill stores mapping
+  Result: Future statements still processed automatically
+
+---
+
+COMPARISON WITH OTHER STATEMENT FORMATS
+========================================
+
+The skill's auto-detection successfully handles multiple bank formats:
+
+Banco Popular Format:
+  - Uses: Fecha (date), Monto (amount), Descripción (merchant)
+  - Language: Spanish headers
+  - Pattern: Single amount column
+  - Learning: Auto-detected ✓
+
+Dart Bank Format:
+  - Uses: Transaction Date, Amount, Merchant, Description
+  - Language: English headers
+  - Pattern: Single amount column
+  - Learning: Auto-detected ✓
+
+NewBank Format:
+  - Uses: Post Date, Debit Amount, Credit Amount, Merchant Name
+  - Language: English headers
+  - Pattern: Split debit/credit columns
+  - Learning: Auto-detected ✓
+
+All formats learned automatically once, then reused forever.
+
+---
+
+TECHNICAL IMPLEMENTATION NOTES
+=============================
+
+The skill's StatementProcessor class implements:
+
+1. detect_bank(file_path)
+   - Returns bank name from filename or CSV headers
+   - Used to identify which format mapping to apply
+
+2. learn_format(file_path, bank_name)
+   - Reads CSV, calls _auto_detect_columns()
+   - Falls back to _interactive_format_setup() if needed
+   - Saves mapping via _save_formats()
+
+3. _auto_detect_columns(fieldnames, bank_name)
+   - Performs pattern matching on CSV headers
+   - Returns mapping dict with all detected columns
+   - Validates essential columns exist
+
+4. parse_statement(file_path, bank_name)
+   - Loads format from memory
+   - Iterates rows, calling _extract_transaction()
+   - Returns list of transaction dicts
+
+5. _extract_transaction(row, format_info)
+   - Uses format_info to extract fields from row
+   - Handles debit/credit parsing
+   - Cleans amounts (removes $, commas)
+   - Returns normalized transaction object
+
+---
+
+OUTPUT FILES
+============
+
+This evaluation generated the following files:
+
+1. NewBank-March-2026.csv
+   - Sample statement with 10 transactions
+   - Realistic format with debit/credit columns
+
+2. statement-formats-newbank-learned.json
+   - The mapping that would be stored in .statement-formats.json
+   - Shows all detected fields and metadata
+
+3. auto-detection-logic.md
+   - Detailed explanation of how pattern matching works
+   - Shows all the pattern lists used
+   - Includes examples of each pattern type
+
+4. parsed-transactions.json
+   - Output of parsing the sample statement
+   - Shows how each transaction is extracted and normalized
+   - Includes summary statistics
+
+5. summary.txt (this file)
+   - Complete explanation of the format learning process
+   - Step-by-step walkthrough
+   - Comparison with other formats
+   - Implementation details
+
+---
+
+CONCLUSION
+==========
+
+The statement-organizer skill successfully demonstrates intelligent, automatic format learning.
+
+Key Achievements:
+✓ Bank identified from filename
+✓ All CSV columns detected via pattern matching
+✓ Format mapping created with high confidence
+✓ Mapping stored for future use
+✓ All transactions parsed correctly (100% success)
+✓ Zero manual intervention required after initial learning
+
+Next Steps:
+When you next process a NewBank statement:
+  - Skill will recognize the format from stored mapping
+  - Parsing will be instant (no re-learning)
+  - All transactions extracted automatically
+  - Ready for FreshBooks sync or further processing
+
+This demonstrates the skill's goal: "Learn once, reuse forever" - making statement processing
+a completely hands-off workflow after the first statement from each bank.

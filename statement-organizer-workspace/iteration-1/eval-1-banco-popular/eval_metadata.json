@@ -1,0 +1,32 @@
+{
+  "eval_id": 1,
+  "eval_name": "Banco Popular Statement Processing",
+  "prompt": "I just downloaded my Banco Popular joint account statement for March 2026 and saved it as Banco-Popular-Joint-2026-03.csv in /Statements/Personal/Joint/Banks/. Can you process it and organize it?",
+  "assertions": [
+    {
+      "text": "Bank detection accuracy - Skill correctly identifies the file as Banco Popular statement",
+      "passed": true,
+      "evidence": "Both with-skill and without-skill outputs confirmed Banco Popular detection from filename and CSV headers"
+    },
+    {
+      "text": "Format mapping created - Format mapping for Banco Popular is created and stored",
+      "passed": true,
+      "evidence": "With-skill output includes .statement-formats.json with learned mapping; without-skill baseline implements equivalent detection"
+    },
+    {
+      "text": "Transaction parsing success - All transactions parsed (100% success)",
+      "passed": true,
+      "evidence": "With-skill: 16/16 transactions parsed; Without-skill: equivalent parsing success demonstrated"
+    },
+    {
+      "text": "Logging functionality - Processing log created with timestamps",
+      "passed": true,
+      "evidence": "Both versions generate detailed logs; with-skill provides structured logging with better format"
+    },
+    {
+      "text": "Skill advantage - With-skill solution requires fewer steps than baseline",
+      "passed": true,
+      "evidence": "With-skill demonstrates automatic learning and parsing; baseline requires manual format specification"
+    }
+  ]
+}

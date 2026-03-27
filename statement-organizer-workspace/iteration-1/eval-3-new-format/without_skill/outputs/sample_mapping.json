@@ -1,0 +1,80 @@
+{
+  "format_name": "auto_detected",
+  "fields": {
+    "Transaction Date": {
+      "field_type": "date",
+      "index": 0,
+      "confidence": 0.9,
+      "sample_values": [
+        "2026-03-01",
+        "2026-03-02",
+        "2026-03-03"
+      ]
+    },
+    "Merchant": {
+      "field_type": "description",
+      "index": 1,
+      "confidence": 0.9,
+      "sample_values": [
+        "Salary Deposit",
+        "Whole Foods Market",
+        "Electric Company"
+      ]
+    },
+    "Amount": {
+      "field_type": "amount",
+      "index": 2,
+      "confidence": 0.7,
+      "sample_values": [
+        "4500.00",
+        "-125.50",
+        "-85.00"
+      ]
+    },
+    "Running Balance": {
+      "field_type": "balance",
+      "index": 4,
+      "confidence": 0.9,
+      "sample_values": [
+        "4500.00",
+        "4374.50",
+        "4289.50"
+      ]
+    },
+    "Reference ID": {
+      "field_type": "description",
+      "index": 5,
+      "confidence": 0.9,
+      "sample_values": [
+        "TR-2026030100001",
+        "TR-2026030200002",
+        "TR-2026030300003"
+      ]
+    }
+  },
+  "required_fields": [
+    "Transaction Date",
+    "Merchant",
+    "Amount",
+    "Reference ID"
+  ],
+  "validation_rules": {
+    "Transaction Date": {
+      "type": "date",
+      "formats": [
+        "YYYY-MM-DD",
+        "MM/DD/YYYY",
+        "DD-MMM-YYYY"
+      ]
+    },
+    "Amount": {
+      "type": "numeric",
+      "pattern": "^-?\\d+\\.?\\d*$"
+    },
+    "Running Balance": {
+      "type": "numeric",
+      "pattern": "^-?\\d+\\.?\\d*$"
+    }
+  },
+  "detection_confidence": 0.86
+}

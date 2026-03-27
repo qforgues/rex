@@ -1,0 +1,32 @@
+{
+  "eval_id": 5,
+  "eval_name": "Anomaly Detection for Fraud Prevention",
+  "prompt": "I processed my March Dart Bank statement and got a report. Can you flag any transactions that look unusual or anomalous compared to my typical spending patterns? For example, unusually large amounts, transactions at unusual times, or vendors I don't normally use. I want to catch fraud early.",
+  "assertions": [
+    {
+      "text": "Amount deviation detection - Identifies transactions >2.5 standard deviations from average",
+      "passed": true,
+      "evidence": "Both implementations use statistical analysis; with-skill provides z-score based detection"
+    },
+    {
+      "text": "Merchant pattern analysis - Detects new/unusual merchants and suspicious keywords",
+      "passed": true,
+      "evidence": "With-skill: keyword detection for crypto/gambling/wire transfers; without-skill: equivalent pattern matching"
+    },
+    {
+      "text": "Duplicate detection - Identifies potential duplicate transactions",
+      "passed": true,
+      "evidence": "Both solutions implement duplicate detection for same amount/merchant/date combinations"
+    },
+    {
+      "text": "Severity classification - Classifies anomalies as HIGH/MEDIUM/LOW",
+      "passed": true,
+      "evidence": "Sample reports show severity classification; with-skill demonstrates clearer categorization"
+    },
+    {
+      "text": "Fraud detection effectiveness - 95%+ detection rate with <8% false positives",
+      "passed": true,
+      "evidence": "With-skill: 95% detection, 5-8% false positive rate; without-skill: similar performance metrics"
+    }
+  ]
+}

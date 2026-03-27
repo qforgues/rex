@@ -1,0 +1,24 @@
+{
+  "schema": "hold-record",
+  "version": 1,
+  "connectionId": "83619dbe-52a6-4d9b-b974-f4fb04b25a7a",
+  "round": 1,
+  "attempt": 1,
+  "state": "FAILED",
+  "reason": "Timeout waiting in AWAITING_RESULT",
+  "timestamp": "2026-03-23T19:00:19.218Z",
+  "availableActions": [
+    {
+      "action": "retry",
+      "description": "Re-dispatch to Anthropic with feedback"
+    },
+    {
+      "action": "revise_instructions",
+      "description": "Ask OpenAI to revise instructions"
+    },
+    {
+      "action": "abandon",
+      "description": "Stop this connection permanently"
+    }
+  ]
+}

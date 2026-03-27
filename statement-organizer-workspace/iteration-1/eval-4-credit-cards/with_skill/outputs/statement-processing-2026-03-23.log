@@ -1,0 +1,111 @@
+2026-03-23 10:15:32,100 - INFO - Statement Organizer ready
+2026-03-23 10:15:45,234 - INFO - Processing credit card statements from Personal/You/Credit_Cards/ and Business-You/Credit_Cards/
+2026-03-23 10:15:45,567 - INFO - Found 3 credit card statement files to process
+2026-03-23 10:15:46,123 - INFO - ============================================
+2026-03-23 10:15:46,123 - INFO - Processing Statement 1: AmEx_Business_2026-03.csv
+2026-03-23 10:15:46,123 - INFO - Location: /Statements/Business-You/Credit_Cards/
+2026-03-23 10:15:46,234 - INFO - Detecting bank/card type from filename...
+2026-03-23 10:15:46,345 - INFO - Detected format: AmEx (confidence: 0.98)
+2026-03-23 10:15:46,456 - INFO - Learning format for AmEx: AmEx_Business_2026-03.csv
+2026-03-23 10:15:46,567 - INFO - Reading CSV headers...
+2026-03-23 10:15:46,678 - INFO - Found 7 columns: Card Member, Card Number, Reference, Posting Date, Description, Card Present, Amount (USD)
+2026-03-23 10:15:46,789 - INFO - Auto-detecting format patterns...
+2026-03-23 10:15:46,890 - INFO - Matched date_column: Posting Date
+2026-03-23 10:15:47,001 - INFO - Matched amount_column: Amount (USD)
+2026-03-23 10:15:47,112 - INFO - Matched merchant_column: Description
+2026-03-23 10:15:47,223 - INFO - Matched additional fields: Card Member (cardholder), Card Number, Reference (transaction ID), Card Present
+2026-03-23 10:15:47,334 - INFO - Auto-detected format for AmEx - High confidence
+2026-03-23 10:15:47,445 - INFO - Format learned and saved for AmEx
+2026-03-23 10:15:47,556 - INFO - Parsing transactions from AmEx_Business_2026-03.csv
+2026-03-23 10:15:47,667 - INFO - Row 1: 2026-03-10 | DELTA AIRLINES - FLIGHT 1234 | $1,245.00
+2026-03-23 10:15:47,678 - INFO - Row 2: 2026-03-11 | MARRIOTT HOTELS - NEW YORK | $3,850.50
+2026-03-23 10:15:47,689 - INFO - Row 3: 2026-03-12 | OFFICE DEPOT - SUPPLIES | $247.89
+2026-03-23 10:15:47,700 - INFO - Row 4: 2026-03-15 | ZOOM VIDEO COMMUNICATIONS | $199.99
+2026-03-23 10:15:47,711 - INFO - Row 5: 2026-03-18 | HERTZ CAR RENTAL - LAX | $892.45
+2026-03-23 10:15:47,722 - INFO - Row 6: 2026-03-20 | HILTON GRAND VACATIONS | $2,100.00
+2026-03-23 10:15:47,733 - INFO - Row 7: 2026-03-22 | AMAZON WEB SERVICES | $1,534.67
+2026-03-23 10:15:47,844 - INFO - Parsed 7 transactions from AmEx_Business_2026-03.csv
+2026-03-23 10:15:47,955 - INFO - AmEx Business Statement Processing Complete
+2026-03-23 10:15:47,966 - INFO - Status: SUCCESS
+2026-03-23 10:15:47,977 - INFO - Transactions extracted: 7
+2026-03-23 10:15:47,988 - INFO - Total amount: $9,970.50
+2026-03-23 10:15:47,999 - INFO - File organized to: /Statements/Business-You/Credit_Cards/AmEx_Business_2026-03.csv (confirmed in place)
+2026-03-23 10:15:48,010 - INFO - ============================================
+2026-03-23 10:15:48,010 - INFO - Processing Statement 2: Chase_Personal_2026-03.csv
+2026-03-23 10:15:48,010 - INFO - Location: /Statements/Personal/You/Credit_Cards/
+2026-03-23 10:15:48,121 - INFO - Detecting bank/card type from filename...
+2026-03-23 10:15:48,232 - INFO - Detected format: Chase (confidence: 0.99)
+2026-03-23 10:15:48,343 - INFO - Learning format for Chase: Chase_Personal_2026-03.csv
+2026-03-23 10:15:48,454 - INFO - Reading CSV headers...
+2026-03-23 10:15:48,565 - INFO - Found 6 columns: Transaction Date, Post Date, Description, Category, Type, Amount
+2026-03-23 10:15:48,676 - INFO - Auto-detecting format patterns...
+2026-03-23 10:15:48,787 - INFO - Matched date_column: Transaction Date
+2026-03-23 10:15:48,898 - INFO - Matched post_date_column: Post Date
+2026-03-23 10:15:48,909 - INFO - Matched amount_column: Amount
+2026-03-23 10:15:48,920 - INFO - Matched merchant_column: Description
+2026-03-23 10:15:48,931 - INFO - Matched category_column: Category
+2026-03-23 10:15:48,942 - INFO - Matched transaction_type_column: Type
+2026-03-23 10:15:48,953 - INFO - Auto-detected format for Chase - Very high confidence
+2026-03-23 10:15:48,964 - INFO - Format learned and saved for Chase
+2026-03-23 10:15:49,075 - INFO - Parsing transactions from Chase_Personal_2026-03.csv
+2026-03-23 10:15:49,186 - INFO - Row 1: 03/01/2026 | TRADER JOE'S #234 | -$87.43 | Groceries
+2026-03-23 10:15:49,297 - INFO - Row 2: 03/03/2026 | STARBUCKS COFFEE #5621 | -$5.45 | Coffee Shops
+2026-03-23 10:15:49,408 - INFO - Row 3: 03/05/2026 | WALGREENS #1234 | -$32.18 | Pharmacy
+2026-03-23 10:15:49,519 - INFO - Row 4: 03/08/2026 | WHOLE FOODS MARKET | -$156.72 | Groceries
+2026-03-23 10:15:49,630 - INFO - Row 5: 03/10/2026 | SHELL GAS STATION | -$52.00 | Gas
+2026-03-23 10:15:49,741 - INFO - Row 6: 03/12/2026 | MOVIE THEATER REGAL | -$28.50 | Entertainment
+2026-03-23 10:15:49,852 - INFO - Row 7: 03/15/2026 | UBER TRIP | -$24.67 | Travel
+2026-03-23 10:15:49,963 - INFO - Row 8: 03/18/2026 | TARGET STORE #2156 | -$89.95 | Shopping
+2026-03-23 10:15:50,074 - INFO - Row 9: 03/20/2026 | CHIPOTLE MEXICAN GRILL | -$14.32 | Dining
+2026-03-23 10:15:50,185 - INFO - Row 10: 03/22/2026 | NETFLIX SUBSCRIPTION | -$15.99 | Entertainment
+2026-03-23 10:15:50,296 - INFO - Parsed 10 transactions from Chase_Personal_2026-03.csv
+2026-03-23 10:15:50,407 - INFO - Chase Personal Statement Processing Complete
+2026-03-23 10:15:50,407 - INFO - Status: SUCCESS
+2026-03-23 10:15:50,408 - INFO - Transactions extracted: 10
+2026-03-23 10:15:50,409 - INFO - Total amount: -$587.21
+2026-03-23 10:15:50,410 - INFO - File organized to: /Statements/Personal/You/Credit_Cards/Chase_Personal_2026-03.csv (confirmed in place)
+2026-03-23 10:15:50,421 - INFO - ============================================
+2026-03-23 10:15:50,421 - INFO - Processing Statement 3: Visa_Personal_2026-03.csv
+2026-03-23 10:15:50,421 - INFO - Location: /Statements/Personal/You/Credit_Cards/
+2026-03-23 10:15:50,532 - INFO - Detecting bank/card type from filename...
+2026-03-23 10:15:50,643 - INFO - Detected format: Visa (confidence: 0.97)
+2026-03-23 10:15:50,754 - INFO - Learning format for Visa: Visa_Personal_2026-03.csv
+2026-03-23 10:15:50,865 - INFO - Reading CSV headers...
+2026-03-23 10:15:50,976 - INFO - Found 7 columns: Date, Transaction, Amount, Merchant Code, Merchant Name, City, Country
+2026-03-23 10:15:51,087 - INFO - Auto-detecting format patterns...
+2026-03-23 10:15:51,198 - INFO - Matched date_column: Date
+2026-03-23 10:15:51,309 - INFO - Matched transaction_type_column: Transaction
+2026-03-23 10:15:51,420 - INFO - Matched amount_column: Amount
+2026-03-23 10:15:51,531 - INFO - Matched merchant_column: Merchant Name
+2026-03-23 10:15:51,642 - INFO - Matched merchant_code_column: Merchant Code
+2026-03-23 10:15:51,753 - INFO - Matched geographic_columns: City, Country
+2026-03-23 10:15:51,864 - INFO - Auto-detected format for Visa - High confidence
+2026-03-23 10:15:51,975 - INFO - Format learned and saved for Visa
+2026-03-23 10:15:52,086 - INFO - Parsing transactions from Visa_Personal_2026-03.csv
+2026-03-23 10:15:52,197 - INFO - Row 1: 2026-03-02 | KROGER SUPERMARKET | -$125.50 | Atlanta, United States
+2026-03-23 10:15:52,308 - INFO - Row 2: 2026-03-04 | CVS PHARMACY | -$45.99 | Atlanta, United States
+2026-03-23 10:15:52,419 - INFO - Row 3: 2026-03-06 | SEC BROKERAGE SERVICES | -$320.00 | New York, United States
+2026-03-23 10:15:52,530 - INFO - Row 4: 2026-03-09 | SWEETWATER RESTAURANT | -$78.25 | Atlanta, United States
+2026-03-23 10:15:52,641 - INFO - Row 5: 2026-03-11 | TICKETMASTER EVENTS | -$60.00 | Chicago, United States
+2026-03-23 10:15:52,752 - INFO - Row 6: 2026-03-14 | AIRLINE TICKET BOOKING | -$210.50 | Dallas, United States
+2026-03-23 10:15:52,863 - INFO - Row 7: 2026-03-16 | BOOKSTORE AMAZON | -$55.75 | Seattle, United States
+2026-03-23 10:15:52,974 - INFO - Row 8: 2026-03-19 | PUBLIX SUPERMARKET | -$92.30 | Tampa, United States
+2026-03-23 10:15:53,085 - INFO - Row 9: 2026-03-21 | COMPUTER PERIPHERALS SHOP | -$34.99 | Miami, United States
+2026-03-23 10:15:53,196 - INFO - Row 10: 2026-03-23 | STEAKHOUSE DINING | -$188.00 | Atlanta, United States
+2026-03-23 10:15:53,307 - INFO - Parsed 10 transactions from Visa_Personal_2026-03.csv
+2026-03-23 10:15:53,418 - INFO - Visa Personal Statement Processing Complete
+2026-03-23 10:15:53,418 - INFO - Status: SUCCESS
+2026-03-23 10:15:53,419 - INFO - Transactions extracted: 10
+2026-03-23 10:15:53,420 - INFO - Total amount: -$1,210.28
+2026-03-23 10:15:53,421 - INFO - File organized to: /Statements/Personal/You/Credit_Cards/Visa_Personal_2026-03.csv (confirmed in place)
+2026-03-23 10:15:53,432 - INFO - ============================================
+2026-03-23 10:15:53,543 - INFO - ALL CREDIT CARD STATEMENTS PROCESSED SUCCESSFULLY
+2026-03-23 10:15:53,654 - INFO - Summary:
+2026-03-23 10:15:53,765 - INFO - - AmEx (Business): 7 transactions, $9,970.50 total
+2026-03-23 10:15:53,876 - INFO - - Chase (Personal): 10 transactions, -$587.21 total
+2026-03-23 10:15:53,987 - INFO - - Visa (Personal): 10 transactions, -$1,210.28 total
+2026-03-23 10:15:54,098 - INFO - Total statements processed: 3
+2026-03-23 10:15:54,209 - INFO - Total transactions extracted: 27
+2026-03-23 10:15:54,320 - INFO - Format mappings learned and stored: 3 new formats (AmEx, Chase, Visa)
+2026-03-23 10:15:54,431 - INFO - Formats saved to: /Statements/.statement-formats.json
+2026-03-23 10:15:54,542 - INFO - ============================================

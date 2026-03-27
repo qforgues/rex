@@ -1,0 +1,33 @@
+UNMATCHED TRANSACTIONS - INVESTIGATE
+Date,Amount,Merchant,Description,Possible Reasons,Action Required
+2026-03-01,100.00,"BANK FEE - MONTHLY SERVICE","Monthly account fee, automatic debit","Routine bank fee, not a client payment","No action - routine fee"
+2026-03-02,50.00,"STRIPE PROCESSING","Stripe transaction processing fee","Processing fee for Dart Bank account","No action - operational cost"
+2026-03-07,250.00,"UNKNOWN VENDOR LLC","Transaction description unclear","Non-Portal42 payment OR merchant name doesn't match any invoice","Investigate: Check if this is a Portal42 vendor misnamed in bank statement"
+2026-03-09,1000.00,"ABC WELLNESS COLLECTIVE","Large payment, no matching invoice","Invoice already marked paid in FreshBooks OR invoice amount differs (e.g. $950 not $1000)","Verify: Check FreshBooks for recent ABC Wellness invoices and their status"
+2026-03-13,180.00,"PARTIAL PAYMENT TEST","Partial payment toward invoice","Bank statement shows $180, but FreshBooks invoice is $300 or $400","Confirm: Is this partial payment? If so, manually record in FreshBooks notes"
+2026-03-14,500.00,"CHICAGO CANNABIS - PROMO CREDIT","Transaction notes indicate promotional credit","May be a credit/refund, not a payment","Check: Verify if this is credit memo or refund in accounting"
+2026-03-17,325.00,"LEAFLINE SYSTEMS CORP","Similar name to INV-FB-005428 (Leafline Systems $475) but different amount","Amount mismatch ($325 vs $475 invoiced). Could be partial or different project.","Follow up: Contact client about partial payment or verify project details"
+2026-03-20,0.00,"INTERNAL TRANSFER","Transfer between Dart Bank accounts","Internal accounting adjustment, not client payment","No action - internal transfer"
+2026-03-23,150.00,"REFUND - WELLNESS OVERPAYMENT","Transaction is a refund going OUT of Dart Bank (negative transaction)","Overpayment refund to client. This reduces receivables, not increases them.","No action - record as refund credit in FreshBooks"
+2026-03-24,275.00,"GREEN LEAF FARMS - PARTIAL","Amount unclear, partial payment possibility","Bank shows $275 but need to verify invoice amount","Clarify: Is this $275 advance payment on $500 invoice or full payment of $275 invoice?"
+
+SUMMARY - UNMATCHED TRANSACTIONS
+Total Unmatched,10
+Total Amount Unmatched,"$3230.00"
+Breakdown:
+  - Routine Fees (Bank/Processing),2 transactions,$150.00
+  - True Mismatches (Investigation Needed),5 transactions,"$1755.00"
+  - Partial Payments (Ambiguous),2 transactions,"$600.00"
+  - Credits/Refunds,1 transaction,"$150.00"
+Analysis:
+  - "Of 10 unmatched: 2 are routine fees (ignore), 1 is refund (log only), leaving 7 that need investigation"
+  - "Of investigation-needed: 5 could be non-Portal42 payments, 2 are likely partial payments"
+  - "Recommended follow-up: Contact Portal42 on items with amounts 250, 325, and 275"
+Date Processed,2026-03-23
+Processing Timestamp,"2026-03-23 14:30:45 UTC"
+
+RECOMMENDED NEXT STEPS
+1. Routine Fees: No action needed (mark as expense)
+2. True Mismatches: Contact Portal42 clients for clarification on amounts
+3. Partial Payments: Confirm with clients if split payments were arranged
+4. Credits/Refunds: Record in FreshBooks as credit memos to reduce A/R

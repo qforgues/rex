@@ -1,0 +1,189 @@
+{
+  "file_info": {
+    "source": "Banco-Popular-Joint-2026-03.csv",
+    "detection_timestamp": "2026-03-23",
+    "format_detected": "Banco Popular",
+    "confidence_score": 85.9,
+    "confidence_level": "High (Safe to process)"
+  },
+  "column_detection": {
+    "detected_count": 6,
+    "required_count": 6,
+    "all_required_present": true,
+    "columns": [
+      {
+        "position": 1,
+        "name": "Fecha",
+        "english_name": "Date",
+        "data_type": "ISO 8601 Date (YYYY-MM-DD)",
+        "required": true,
+        "validation_status": "Valid",
+        "sample_values": ["2026-03-01", "2026-03-02", "2026-03-03"],
+        "description": "Transaction date in Spanish banking format"
+      },
+      {
+        "position": 2,
+        "name": "Descripcion",
+        "english_name": "Description",
+        "data_type": "Text",
+        "required": true,
+        "validation_status": "Valid",
+        "sample_values": [
+          "Saldo Inicial",
+          "Deposito Directa - ACME Corp",
+          "Transferencia a Ahorros (000111)"
+        ],
+        "description": "Transaction description in Spanish with transaction type keywords"
+      },
+      {
+        "position": 3,
+        "name": "Referencia",
+        "english_name": "Reference",
+        "data_type": "Text (alphanumeric)",
+        "required": true,
+        "validation_status": "Valid",
+        "sample_values": ["", "DDT-0301", "TRF-001"],
+        "description": "Reference number or code for tracking transactions (can be empty for balance rows)"
+      },
+      {
+        "position": 4,
+        "name": "Depositos",
+        "english_name": "Deposits",
+        "data_type": "Decimal (DOP)",
+        "required": true,
+        "validation_status": "Valid",
+        "sample_values": ["0.00", "2500.00", "500.00"],
+        "numeric_format": "Dot separator, no thousand separators, zero values as '-' or 0.00",
+        "description": "Deposit amounts (positive values or empty/dash for none)"
+      },
+      {
+        "position": 5,
+        "name": "Retiros",
+        "english_name": "Withdrawals",
+        "data_type": "Decimal (DOP)",
+        "required": true,
+        "validation_status": "Valid",
+        "sample_values": ["0.00", "1000.00", "150.35"],
+        "numeric_format": "Dot separator, no thousand separators, zero values as '-' or 0.00",
+        "description": "Withdrawal amounts (positive values or empty/dash for none)"
+      },
+      {
+        "position": 6,
+        "name": "Saldo",
+        "english_name": "Balance",
+        "data_type": "Decimal (DOP)",
+        "required": true,
+        "validation_status": "Valid",
+        "sample_values": ["5000.00", "7500.00", "6500.00"],
+        "numeric_format": "Running balance after each transaction",
+        "description": "Account balance after transaction (cumulative)"
+      }
+    ]
+  },
+  "detection_criteria": {
+    "header_validation": {
+      "required_columns": ["Fecha", "Descripcion", "Referencia", "Depositos", "Retiros", "Saldo"],
+      "found_columns": ["Fecha", "Descripcion", "Referencia", "Depositos", "Retiros", "Saldo"],
+      "match_status": "100% match",
+      "confidence_contribution": "40%"
+    },
+    "pattern_matching": {
+      "patterns_checked": [
+        "Deposito Directa",
+        "Transferencia",
+        "Compra Tarjeta Debito",
+        "Retiro Cajero",
+        "Pago Factura"
+      ],
+      "patterns_found": 14,
+      "patterns_in_first_20_rows": 13,
+      "match_rate": "65%",
+      "confidence_contribution": "25.9%"
+    },
+    "date_format_validation": {
+      "expected_format": "YYYY-MM-DD",
+      "validated_count": 17,
+      "total_rows": 17,
+      "success_rate": "100%",
+      "confidence_contribution": "20%"
+    }
+  },
+  "data_statistics": {
+    "total_rows": 18,
+    "transaction_rows": 17,
+    "date_range": {
+      "start_date": "2026-03-01",
+      "end_date": "2026-03-23",
+      "days_spanned": 22
+    },
+    "currency": "DOP (Dominican Pesos)",
+    "numeric_statistics": {
+      "total_deposits": 5825.50,
+      "total_withdrawals": 2211.08,
+      "net_change": 3614.42,
+      "opening_balance": 5000.00,
+      "closing_balance": 8614.42,
+      "balance_verified": true
+    }
+  },
+  "transaction_categories_detected": {
+    "Income": {
+      "count": 4,
+      "transactions": [
+        "Deposito Directa - ACME Corp",
+        "Deposito Cheque #1234",
+        "Interes Crediticio",
+        "Transferencia Recibida de Ana Garcia"
+      ]
+    },
+    "Expense": {
+      "count": 11,
+      "transactions": [
+        "Transferencia a Ahorros (000111)",
+        "Compra Tarjeta Debito - Supermercado",
+        "Compra Tarjeta Debito - Gasolina",
+        "Retiro Cajero Automatico",
+        "Pago Factura - Electricidad",
+        "Transferencia Enviada a Juan Perez",
+        "Compra Online - Amazon",
+        "Pago Factura - Internet",
+        "Compra Tarjeta Debito - Restaurante"
+      ]
+    },
+    "Fee": {
+      "count": 1,
+      "transactions": ["Comisión Mantenimiento de Cuenta"]
+    },
+    "Other": {
+      "count": 1,
+      "transactions": ["Saldo Inicial"]
+    }
+  },
+  "encoding_and_format": {
+    "detected_encoding": "UTF-8",
+    "line_endings": "LF (Unix)",
+    "delimiter": "Comma",
+    "quoted_fields": "Not required",
+    "has_header_row": true,
+    "header_row_position": 1
+  },
+  "data_quality": {
+    "missing_values": {
+      "Referencia": "Often empty for balance rows - expected",
+      "Depositos": "Often zero (represented as '-' or '0.00') - expected",
+      "Retiros": "Often zero (represented as '-' or '0.00') - expected"
+    },
+    "data_integrity_checks": {
+      "balance_continuity": "PASS - Each balance matches previous + deposit - withdrawal",
+      "no_null_fields": "PASS - All required fields present",
+      "numeric_format_consistency": "PASS - All amounts in DOP format",
+      "date_format_consistency": "PASS - All dates in YYYY-MM-DD format"
+    }
+  },
+  "organization_recommendations": {
+    "folder_structure": "/2026/Banco-Popular/Joint-Account/2026-03/",
+    "file_naming": "Banco-Popular-Joint-2026-03.csv",
+    "backup_location": "/Archive/2026/03/Banco-Popular-Joint-2026-03.csv.bak",
+    "processed_output_location": "/Processed/2026/03/Banco-Popular-Joint-2026-03-transactions.json"
+  }
+}

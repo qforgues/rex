@@ -1,0 +1,18 @@
+Fecha,Descripcion,Referencia,Depositos,Retiros,Saldo
+2026-03-01,Saldo Inicial,,0.00,0.00,5000.00
+2026-03-02,Deposito Directa - ACME Corp,DDT-0301,2500.00,0.00,7500.00
+2026-03-03,Transferencia a Ahorros (000111),TRF-001,-,1000.00,6500.00
+2026-03-04,Compra Tarjeta Debito - Supermercado,POS-001,-,150.35,6349.65
+2026-03-05,Compra Tarjeta Debito - Gasolina,POS-002,-,45.00,6304.65
+2026-03-06,Retiro Cajero Automatico,ATM-001,-,200.00,6104.65
+2026-03-07,Pago Factura - Electricidad,BIL-001,-,95.50,6009.15
+2026-03-08,Deposito Cheque #1234,CHK-0001,500.00,0.00,6509.15
+2026-03-10,Transferencia Enviada a Juan Perez,TRF-002,-,500.00,6009.15
+2026-03-12,Compra Online - Amazon,POS-003,-,89.99,5919.16
+2026-03-14,Interes Crediticio,INT-001,25.50,0.00,5944.66
+2026-03-15,Comisión Mantenimiento de Cuenta,FEE-001,-,15.00,5929.66
+2026-03-16,Deposito Directa - ACME Corp,DDT-0302,2500.00,0.00,8429.66
+2026-03-18,Pago Factura - Internet,BIL-002,-,49.99,8379.67
+2026-03-20,Transferencia Recibida de Ana Garcia,TRF-003,300.00,0.00,8679.67
+2026-03-22,Compra Tarjeta Debito - Restaurante,POS-004,-,65.25,8614.42
+2026-03-23,Saldo Final,,0.00,0.00,8614.42

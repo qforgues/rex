@@ -1,0 +1,463 @@
+================================================================================
+DART BANK STATEMENT TO FRESHBOOKS INVOICE MATCHING
+WITHOUT SKILL: MATCHING ALGORITHM & APPROACH
+================================================================================
+Generated: 2026-03-23
+Report Type: Algorithm Explanation & Approach Documentation
+
+
+================================================================================
+SECTION 1: HOW THE MATCHING ALGORITHM WORKS
+================================================================================
+
+The matching system uses a MULTI-STRATEGY SCORING APPROACH to connect Dart Bank
+transactions to FreshBooks invoices. Instead of requiring a perfect match on a
+single field, the algorithm evaluates multiple signals and assigns a score
+(0-150 points) to each transaction-invoice pair.
+
+SCORING COMPONENTS (Total: ~150 points possible):
+===============================================
+
+1. AMOUNT MATCHING (0-40 points)
+   ├─ Exact match (difference <= $0.01):        40 points (HIGH CONFIDENCE)
+   ├─ Close match (difference < $1):            30 points (MEDIUM CONFIDENCE)
+   └─ No match (difference >= $1):              0 points
+
+   Rationale: Most payments match exactly to invoice amounts. Accounting
+   systems rarely have small rounding discrepancies. Exact amount matching
+   is the strongest signal.
+
+2. INVOICE ID EXTRACTION (0-50 points)
+   ├─ Exact invoice ID found & matched:         50 points
+   └─ No invoice ID found:                      0 points
+
+   Pattern Recognition:
+   - Looks for: "INV-2026-001" format
+   - Looks for: "Invoice 2026-001" (extracts number, formats as INV-2026-001)
+   - Looks for: "REF-2026-001" (extracts and validates)
+   - Looks for: Standalone numbers (2026-001) in reference field
+
+   Rationale: Bank reference fields often contain the invoice ID. If we can
+   confidently extract and match an invoice ID, this is strong evidence.
+
+3. CLIENT NAME/MERCHANT MATCHING (0-20 points)
+   ├─ Exact name match:                         20 points (fuzzy_score = 1.0)
+   ├─ Partial match (>85% similarity):          15-19 points
+   ├─ Weak match (50-85% similarity):           5-14 points
+   └─ No match:                                 0 points
+
+   Rationale: Portal42 merchant names extract the client name (e.g.,
+   "Portal42-Acme Corp" → "Acme Corp"). We compare this with FreshBooks
+   client names using string similarity. Exact matches increase confidence.
+
+4. DATE PROXIMITY (0-10 points)
+   ├─ Payment within 3 days of invoice date:    10 points
+   ├─ Payment within 30 days of invoice date:   5-9 points (decreasing)
+   └─ Payment outside 30-day window:            0 points
+
+   Rationale: Payments typically arrive within 3-30 days of invoice. We
+   penalize transactions that occur before the invoice date or much later.
+   This prevents matching old invoices to recent payments.
+
+
+CLASSIFICATION THRESHOLDS:
+==========================
+
+Score >= 95:        EXACT MATCH
+                    → Mark invoice as PAID immediately
+                    → Confidence: 95%+
+                    → Typical score: 115-120 points
+
+Score 70-94:        PROBABLE MATCH
+                    → Usually safe to mark as paid
+                    → But verify manually for large amounts
+                    → Confidence: 70-94%
+
+Score 45-69:        AMBIGUOUS
+                    → REQUIRES MANUAL REVIEW
+                    → Multiple invoices have similar scores
+                    → May be correct but not certain
+                    → Confidence: 45-69%
+
+Score < 45:         NO MATCH
+                    → Transaction doesn't correspond to any invoice
+                    → May be a fee, transfer, or invoice not yet in FreshBooks
+                    → Confidence: <45%
+
+
+================================================================================
+SECTION 2: HANDLING AMBIGUITIES & EDGE CASES
+================================================================================
+
+AMBIGUITY SITUATION 1: Multiple Close Matches
+----------------------------------------------
+Problem: A transaction of $2,500 could match Invoice A ($2,500, score 115)
+         AND Invoice B ($2,500, score 110)
+
+Solution:
+1. Calculate scores for ALL unmatched invoices
+2. Rank by score (highest first)
+3. Check if top score is SIGNIFICANTLY higher (>20 point gap)
+   - If yes: Consider it probable/exact match
+   - If no: Mark as AMBIGUOUS, flag both candidates for review
+4. Lock matched invoices: Once matched, invoice cannot be matched again
+   (prevents double-counting)
+
+Example from data:
+  DART-20260320-001 ($4,500)
+  - Top candidate: INV-2026-008 (score 57.3) - AMBIGUOUS
+  - 2nd candidate: INV-2026-008 (score 57.3) - CONFLICT!
+  Action: FLAG FOR REVIEW - Check invoice dates and reference text
+
+
+AMBIGUITY SITUATION 2: Partial Invoice ID Extraction
+-----------------------------------------------------
+Problem: Reference says "INV-003" but we have "INV-2026-003" in FreshBooks
+
+Solution:
+1. Extract "003" from reference
+2. Try substring matching: "003" appears in "INV-2026-003"
+3. If confident match found, proceed with other scoring
+4. If unsure, lower confidence level (treat as middle name match, not ID match)
+
+Example from data:
+  DART-20260315-001 reference: "INV-003"
+  Extracted: "INV-003"
+  Matches: "INV-2026-003" (substring match of "003")
+  Result: AMBIGUOUS (ID match partial, not confident)
+
+
+AMBIGUITY SITUATION 3: Non-Portal42 Transactions
+-------------------------------------------------
+Problem: Bank statement includes transfers, fees, withdrawals (not client payments)
+
+Solution:
+1. Check merchant name for "Portal42" prefix
+2. If NOT found: Classify as NO_MATCH
+3. Do not attempt to match against invoices
+4. Flag reason: "Non-Portal42 transaction (transfer/fee)"
+
+Example from data:
+  DART-20260327-001: "Transfer-Internal" $5,000
+  Action: SKIP - Not a client payment
+
+
+AMBIGUITY SITUATION 4: Missing or Incorrect Reference
+------------------------------------------------------
+Problem: Some transactions have no reference or vague reference ("2026-006")
+
+Solution:
+1. Still perform amount match (most reliable signal)
+2. Use merchant name for fuzzy matching
+3. Use date proximity as tie-breaker
+4. Score may be lower (no ID match bonus), but still valid
+
+Example from data:
+  DART-20260312-001 reference: "2026-006"
+  - Amount match: $1,500.75 (40 points)
+  - Name match: "Creative Studio" (20 points)
+  - Date: 4 days after invoice (8 points)
+  - ID extraction: Incomplete (0 points)
+  Total: 68.7 points → AMBIGUOUS
+
+
+================================================================================
+SECTION 3: WHAT NEEDS MANUAL REVIEW
+================================================================================
+
+REVIEW CATEGORY 1: Ambiguous Matches (45-69 points)
+---------------------------------------------------
+These transactions have conflicting signals and need human judgment:
+
+1. Multiple invoices with similar scores
+   Action: Check reference field against each invoice manually
+
+2. Invoice ID extracted but doesn't perfectly match
+   Action: Verify correct invoice by client name + amount + date
+
+3. Large amounts with medium confidence
+   Action: Contact client or review email correspondence
+
+4. No clear invoice ID in reference field
+   Action: Check transaction notes, call client, or review email
+
+From the sample data: 8 of 13 transactions require review (61% ambiguous rate)
+This is due to inconsistent reference formatting - see recommendations below.
+
+
+REVIEW CATEGORY 2: Unmatched Transactions (0-44 points)
+-------------------------------------------------------
+These may be:
+1. Fees or bank charges (not client payments)
+2. Invoices pending entry in FreshBooks (new clients)
+3. Duplicate payments (client paid twice)
+4. Manual transfers between accounts
+
+From the sample data: 1 of 13 transactions is unmatched
+- DART-20260327-001: $5,000 "Transfer-Internal" → Clearly not a client payment
+
+
+REVIEW CATEGORY 3: Unmatched Invoices
+--------------------------------------
+After all transactions are matched, check if ANY invoices remain unmatched.
+These may be:
+1. Invoices sent but not yet paid
+2. Invoices entered incorrectly (wrong amount)
+3. Invoices from cancelled contracts (to remove)
+
+See unmatched_invoices.txt report for full list.
+
+
+================================================================================
+SECTION 4: IMPROVING MATCHING QUALITY
+================================================================================
+
+Current State: 30.8% exact confidence, 61% ambiguous
+
+To IMPROVE matching quality, consider these changes:
+
+RECOMMENDATION 1: Standardize Bank Reference Format
+---------------------------------------------------
+Current: Inconsistent - "INV-2026-001", "Invoice 2026-003", "REF-2026-004"
+Target:  Consistent - Always "INV-YYYY-NNN" (e.g., "INV-2026-001")
+
+Impact: Would increase exact matches from 4 to ~11 (84% → 98% confidence)
+Effort: Update bank/accounting procedures
+
+Implementation:
+- Train staff: Always enter invoice number in consistent format
+- Audit recent transactions: Reformat references before processing
+- API integration: Auto-format when entering transactions
+
+
+RECOMMENDATION 2: Add Transaction Notes to Bank Export
+-------------------------------------------------------
+Current: Limited information in reference field
+Target:  Include description like "Payment for Invoice INV-2026-001 - Acme Corp"
+
+Impact: Would improve name matching and confidence
+Effort: Update bank export template
+
+Implementation:
+- Configure Dart Bank export: Include transaction description
+- Parse both reference AND description fields
+- Weight description field slightly lower (less controlled)
+
+
+RECOMMENDATION 3: Use FreshBooks Invoice Number in Client Invoices
+--------------------------------------------------
+Current: Client invoices may use their own numbering
+Target:  Always include Portal42 FreshBooks invoice number in payment instructions
+
+Impact: Clients would provide correct invoice numbers in transfers
+Effort: Update invoice template
+
+Implementation:
+- Add "Payment Reference: INV-YYYY-NNN" to invoice footer
+- Train A/R team: Include invoice number in payment requests
+- Request clients use invoice number for payments
+
+
+RECOMMENDATION 4: Tighten Date Window for Portal42 Payments
+---------------------------------------------------
+Current: Accept payments up to 30 days after invoice
+Target:  Create tiers based on client history
+  - New clients: 45 days
+  - Regular clients: 30 days
+  - Prepaid contracts: Reverse match (payment before invoice)
+
+Impact: Better handling of unusual payment patterns
+Effort: Low - add client payment profile
+
+Implementation:
+- Track each client's typical payment cycle
+- Adjust date_window_days based on client
+- Flag early/late payments for attention
+
+
+================================================================================
+SECTION 5: ALGORITHM PARAMETERS & TUNING
+================================================================================
+
+Current Configuration:
+======================
+amount_tolerance: $0.01
+  - How much currency difference allows amount match
+  - Current: Very strict (matches only exact amounts)
+  - Could increase to: $0.50 (allows rounding/bank fee impact)
+
+date_window_days: 30
+  - Days after invoice date to accept payment
+  - Current: 30 days
+  - Typical range: 15-60 days depending on industry
+
+fuzzy_match_threshold: 0.85
+  - String similarity threshold (0-1)
+  - Current: 85% (high bar)
+  - Could decrease to: 0.70 (allows more variations)
+
+Score thresholds:
+  - Exact:     >= 95 points
+  - Probable:  70-94 points
+  - Ambiguous: 45-69 points
+  - No match:  < 45 points
+
+Could adjust to:
+  - Exact:     >= 100 points (higher bar)
+  - Probable:  80-99 points (stricter)
+  - Ambiguous: 50-79 points (tighter range)
+
+
+TUNING FOR DIFFERENT SCENARIOS:
+================================
+
+Scenario A: High-Volume, Less Critical
+  (Many small transactions, manual review not possible)
+
+  Adjustment:
+  - Lower exact threshold to 85 points
+  - Auto-mark probable matches as paid
+  - Increase amount_tolerance to $1.00
+
+  Result: Fewer reviews needed, slight increase in false positives
+
+
+Scenario B: High-Value, Audit-Heavy
+  (Large invoices, strict accounting requirements)
+
+  Adjustment:
+  - Raise exact threshold to 110 points
+  - Require human approval for all > $5,000
+  - Reduce date_window_days to 15
+
+  Result: More reviews needed, very high confidence matches
+
+
+Scenario C: Multi-Currency
+  (Payments in different currencies with exchange rates)
+
+  Adjustment:
+  - Get current exchange rate for each transaction
+  - Convert invoice amounts to transaction currency
+  - Increase amount_tolerance to 2% (handles exchange variation)
+
+  Result: Handles currency differences
+
+
+================================================================================
+SECTION 6: SAMPLE OUTPUTS EXPLANATION
+================================================================================
+
+Three reports are generated:
+
+1. dart_freshbooks_matching_report.csv
+   └─ Machine-readable detailed results
+   └─ Columns: TransactionID, Date, Merchant, Amount, Reference,
+              MatchedInvoiceID, ClientName, MatchScore, MatchType, Details
+   └─ Use for: Excel pivot tables, integration with other systems
+   └─ Open in: Excel, Google Sheets, Python, SQL
+
+2. reconciliation_summary.txt
+   └─ Executive summary with sections:
+      - Reconciliation Summary (total counts)
+      - Transactions Marked as Paid (4 exact matches = $9,500.50)
+      - Transactions Requiring Review (8 ambiguous = $26,641.25)
+      - Detailed Review Info (per-transaction analysis)
+   └─ Use for: Accounting review, management reporting
+   └─ Open in: Text editor, email
+
+3. unmatched_invoices.txt
+   └─ Follow-up report
+   └─ Lists invoices with no corresponding bank transaction
+   └─ Use for: AR follow-up, payment chasing
+   └─ Open in: Text editor, email
+
+
+SAMPLE REPORT ANALYSIS:
+======================
+
+From reconciliation_summary.txt:
+
+  Total Transactions: 13
+  Exact Matches: 4 (31%)
+  Ambiguous: 8 (62%)
+  Unmatched: 1 (8%)
+
+  Confidence: 30.8% (only 4 certain matches)
+
+  Marked as Paid: $9,500.50 (26% of total)
+  Requires Review: $26,641.25 (74% of total)
+
+Interpretation:
+- Only 26% of transaction amount can be auto-marked as paid
+- 74% requires human review (inconsistent reference formatting is the issue)
+- Quality would improve significantly with standardized references
+
+
+================================================================================
+SECTION 7: PRACTICAL NEXT STEPS
+================================================================================
+
+IMMEDIATE (Today):
+1. Review the 8 ambiguous transactions in reconciliation_summary.txt
+2. For each, check:
+   - Is the extracted invoice ID correct?
+   - Do client name and amount match?
+   - Does payment date make sense?
+3. Mark confirmed matches as paid in FreshBooks
+4. Escalate conflicts to accounts receivable team
+
+SHORT-TERM (This Week):
+1. Implement Recommendation #1: Standardize bank reference format
+2. Rerun matching algorithm on historical statements
+3. Document which format worked best
+4. Train team on new standard
+
+MEDIUM-TERM (This Month):
+1. Automate the matching process
+2. Set up daily/weekly batch processing
+3. Create alert for transactions requiring review
+4. Integrate with FreshBooks API for auto-marking
+
+LONG-TERM (This Quarter):
+1. Implement Recommendations #2-4
+2. Build matching quality dashboard
+3. Track accuracy metrics over time
+4. Refine scoring thresholds based on experience
+
+
+================================================================================
+SECTION 8: TROUBLESHOOTING COMMON ISSUES
+================================================================================
+
+Issue: Many transactions marked AMBIGUOUS when they should be EXACT
+Fix:   Check reference field format - may not contain recognizable invoice ID
+       Increase fuzzy_match_threshold if names don't match exactly
+
+Issue: Transactions marked EXACT but amounts don't match
+Fix:   Increase amount_tolerance if there are consistent rounding differences
+       Check for bank fees that reduce transaction amount
+
+Issue: Old invoices getting matched to new transactions
+Fix:   Reduce date_window_days parameter
+       Check for duplicate invoices in FreshBooks
+
+Issue: Similar merchant names causing false matches
+Fix:   Increase fuzzy_match_threshold (make matching stricter)
+       Add more distinctive info to merchant names
+
+Issue: Referencefeld is empty for many transactions
+Fix:   Lower the weight of invoice_id_match in scoring
+       Rely more on amount + name + date proximity
+
+
+================================================================================
+END OF REPORT
+================================================================================
+
+For questions about the matching algorithm, refer to:
+- matching_algorithm.py: Full source code with detailed comments
+- generate_report.py: Report generation logic
+- This file: Algorithm explanation and approach
+
+Contact: Analysis team for algorithm tuning or customization

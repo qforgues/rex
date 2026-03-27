@@ -1,0 +1,45 @@
+{
+  "round": 1,
+  "attempt": 1,
+  "resultRef": "result-001-001.json",
+  "files": [
+    {
+      "path": "claude-financial-assistant/config/env.example",
+      "action": "create",
+      "bytes": 71
+    },
+    {
+      "path": "claude-financial-assistant/server/middleware/authMiddleware.js",
+      "action": "create",
+      "bytes": 402
+    },
+    {
+      "path": "claude-financial-assistant/server/routes/authRoutes.js",
+      "action": "create",
+      "bytes": 3333
+    },
+    {
+      "path": "claude-financial-assistant/server/app.js",
+      "action": "create",
+      "bytes": 3380
+    },
+    {
+      "path": "claude-financial-assistant/package.json",
+      "action": "create",
+      "bytes": 732
+    },
+    {
+      "path": "claude-financial-assistant/tests/server/authController.test.js",
+      "action": "create",
+      "bytes": 5572
+    },
+    {
+      "path": "claude-financial-assistant/README.md",
+      "action": "create",
+      "bytes": 2907
+    }
+  ],
+  "adoptedAt": "2026-03-23T19:19:45.700Z",
+  "gitBranch": null,
+  "gitCommitSha": null
+}

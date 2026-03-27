@@ -1,0 +1,14 @@
+2026-03-23 11:47:47,534 - INFO - Learning format for Banco Popular: /sessions/amazing-sharp-clarke/mnt/rex/statement-organizer-workspace/iteration-1/eval-1-banco-popular/test_statements/Personal/Joint/Banks/Banco-Popular-Joint-2026-03.csv
+2026-03-23 11:47:47,535 - WARNING - Could not auto-detect format for Banco Popular
+2026-03-23 11:47:47,536 - WARNING - Could not auto-detect format. Manual identification needed.
+2026-03-23 11:47:47,536 - INFO - Please identify which columns contain: date, amount, merchant
+2026-03-23 11:47:47,536 - INFO - Format learned and saved for Banco Popular
+2026-03-23 11:47:47,537 - ERROR - Cannot parse /sessions/amazing-sharp-clarke/mnt/rex/statement-organizer-workspace/iteration-1/eval-1-banco-popular/test_statements/Personal/Joint/Banks/Banco-Popular-Joint-2026-03.csv: format information incomplete
+2026-03-23 11:47:47,537 - WARNING - FreshBooks API token not configured. Skipping sync.
+2026-03-23 11:47:47,537 - INFO - Report generated: /sessions/amazing-sharp-clarke/mnt/rex/statement-organizer-workspace/iteration-1/eval-1-banco-popular/test_statements/Logs/freshbooks-matches-2026-03-23.csv
+2026-03-23 11:48:12,820 - ERROR - Cannot parse /sessions/amazing-sharp-clarke/mnt/rex/statement-organizer-workspace/iteration-1/eval-1-banco-popular/test_statements/Personal/Joint/Banks/Banco-Popular-Joint-2026-03.csv: format information incomplete
+2026-03-23 11:48:12,820 - WARNING - FreshBooks API token not configured. Skipping sync.
+2026-03-23 11:48:12,821 - INFO - Report generated: /sessions/amazing-sharp-clarke/mnt/rex/statement-organizer-workspace/iteration-1/eval-1-banco-popular/test_statements/Logs/freshbooks-matches-2026-03-23.csv
+2026-03-23 11:49:16,866 - ERROR - Cannot parse /sessions/amazing-sharp-clarke/mnt/rex/statement-organizer-workspace/iteration-1/eval-1-banco-popular/test_statements/Personal/Joint/Banks/Banco-Popular-Joint-2026-03.csv: format information incomplete
+2026-03-23 11:49:16,866 - WARNING - FreshBooks API token not configured. Skipping sync.
+2026-03-23 11:49:16,867 - INFO - Report generated: /sessions/amazing-sharp-clarke/mnt/rex/statement-organizer-workspace/iteration-1/eval-1-banco-popular/test_statements/Logs/freshbooks-matches-2026-03-23.csv

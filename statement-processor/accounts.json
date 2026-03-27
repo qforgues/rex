@@ -1,0 +1,110 @@
+[
+  {
+    "account_id": "personal_chase_checking",
+    "account_name": "Chase Checking (Primary)",
+    "institution": "Chase Bank",
+    "account_type": "bank",
+    "holder": "you",
+    "folder_path": "Personal/Banks/Chase Checking",
+    "account_number_last4": "XXXX",
+    "statement_frequency": "monthly",
+    "created_date": "2026-03-23",
+    "notes": "Primary personal checking account"
+  },
+  {
+    "account_id": "personal_amex",
+    "account_name": "American Express",
+    "institution": "American Express",
+    "account_type": "credit_card",
+    "holder": "you",
+    "folder_path": "Personal/Credit Cards/Amex",
+    "account_number_last4": "XXXX",
+    "statement_frequency": "monthly",
+    "created_date": "2026-03-23",
+    "notes": "Personal credit card"
+  },
+  {
+    "account_id": "personal_fidelity",
+    "account_name": "Fidelity Brokerage",
+    "institution": "Fidelity",
+    "account_type": "investment",
+    "holder": "you",
+    "folder_path": "Personal/Investments/Fidelity",
+    "account_number_last4": "XXXX",
+    "statement_frequency": "quarterly",
+    "created_date": "2026-03-23",
+    "notes": "Personal investment account"
+  },
+  {
+    "account_id": "joint_wellsfargo",
+    "account_name": "Wells Fargo Checking (Joint)",
+    "institution": "Wells Fargo",
+    "account_type": "bank",
+    "holder": "joint",
+    "folder_path": "Joint (Me & Wife)/Banks/Wells Fargo",
+    "account_number_last4": "XXXX",
+    "statement_frequency": "monthly",
+    "created_date": "2026-03-23",
+    "notes": "Joint household checking account"
+  },
+  {
+    "account_id": "joint_discover",
+    "account_name": "Discover Card (Joint)",
+    "institution": "Discover",
+    "account_type": "credit_card",
+    "holder": "joint",
+    "folder_path": "Joint (Me & Wife)/Credit Cards/Discover",
+    "account_number_last4": "XXXX",
+    "statement_frequency": "monthly",
+    "created_date": "2026-03-23",
+    "notes": "Joint credit card for household expenses"
+  },
+  {
+    "account_id": "business_checking",
+    "account_name": "Business Checking Account",
+    "institution": "Chase Business",
+    "account_type": "bank",
+    "holder": "business_you",
+    "folder_path": "Business (Your Name)/Bank Accounts/Chase",
+    "account_number_last4": "XXXX",
+    "statement_frequency": "monthly",
+    "created_date": "2026-03-23",
+    "notes": "Main business operating account"
+  },
+  {
+    "account_id": "business_amex_corp",
+    "account_name": "American Express Corporate",
+    "institution": "American Express",
+    "account_type": "credit_card",
+    "holder": "business_you",
+    "folder_path": "Business (Your Name)/Credit Cards/Amex",
+    "account_number_last4": "XXXX",
+    "statement_frequency": "monthly",
+    "created_date": "2026-03-23",
+    "notes": "Business credit card for expenses"
+  },
+  {
+    "account_id": "wife_business_checking",
+    "account_name": "Wife's Business Checking",
+    "institution": "Bank of America",
+    "account_type": "bank",
+    "holder": "business_wife",
+    "folder_path": "Business (Wife's Name)/Bank Accounts/BofA",
+    "account_number_last4": "XXXX",
+    "statement_frequency": "monthly",
+    "created_date": "2026-03-23",
+    "notes": "Wife's sole proprietor business account"
+  },
+  {
+    "account_id": "wife_business_card",
+    "account_name": "Wife's Business Credit Card",
+    "institution": "Capital One",
+    "account_type": "credit_card",
+    "holder": "business_wife",
+    "folder_path": "Business (Wife's Name)/Credit Cards/Capital One",
+    "account_number_last4": "XXXX",
+    "statement_frequency": "monthly",
+    "created_date": "2026-03-23",
+    "notes": "Wife's business credit card"
+  }
+]

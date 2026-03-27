@@ -1,0 +1,22 @@
+FLAGGED TRANSACTIONS - ANOMALY DETECTION REPORT
+Generated:,2026-03-23 14:30:00
+
+SUMMARY
+Total Anomalies:,12
+High Severity (Critical):,2
+Medium Severity (Warning):,5
+Low Severity (Info):,5
+
+DATE,AMOUNT,MERCHANT,SEVERITY,FLAGS/REASONS
+2026-03-18,$5200.00,Wire Transfer - Crypto Exchange,HIGH,Suspicious merchant category: Wire Transfer - Crypto Exchange | Large amount: $5200.00 (5.2x typical)
+2026-03-15,$4500.00,International Wire Service,HIGH,Large amount: $4500.00 (4.5x typical)
+2026-03-22,$1800.00,Amazon Fresh - New Account,MEDIUM,Large amount: $1800.00 (1.8x typical) | New/unusual merchant: Amazon Fresh - New Account
+2026-03-21,$1650.00,Dispensary Suppliers Corp,MEDIUM,Large amount: $1650.00 (1.65x typical)
+2026-03-19,$1200.00,Starbucks Coffee,MEDIUM,Potential duplicate: 3 transactions with same amount ($1200.00) and merchant (Starbucks Coffee)
+2026-03-14,$1100.00,Netflix,MEDIUM,Large amount: $1100.00 (1.1x typical)
+2026-03-17,$950.00,Unusual Tech Startup - First Time,LOW,New/unusual merchant: Unusual Tech Startup - First Time
+2026-03-20,$800.00,Starbucks Coffee,LOW,Multiple transactions at same merchant (3 times): STARBUCKS COFFEE
+2026-03-13,$750.00,Dispensary Supplies USA,LOW,Multiple transactions at same merchant (2 times): DISPENSARY SUPPLIES USA
+2026-03-12,$600.00,Gas Station Premium,LOW,Round dollar amount: $600.00 (possible cash withdrawal)
+2026-03-11,$500.00,Fast Food Chain,LOW,New/unusual merchant: Fast Food Chain
+2026-03-10,$500.00,Restaurant Downtown,LOW,Round dollar amount: $500.00 (possible cash withdrawal)

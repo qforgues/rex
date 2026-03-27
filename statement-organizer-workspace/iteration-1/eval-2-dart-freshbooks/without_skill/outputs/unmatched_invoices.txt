@@ -1,0 +1,20 @@
+================================================================================
+UNMATCHED INVOICES REPORT
+(Invoices with no corresponding bank transaction)
+Generated: 2026-03-23 11:48:26
+================================================================================
+
+Total Unmatched Invoices: 9
+Total Unmatched Amount: $25141.25
+
+InvoiceID       Client                          Amount Date         Status    
+--------------------------------------------------------------------------------
+INV-2026-004    Innovation Labs           $     890.25 2026-03-01   Sent      
+INV-2026-006    Creative Studio           $    1500.75 2026-03-08   Sent      
+INV-2026-007    DataFlow Systems          $    3200.00 2026-03-10   Sent      
+INV-2026-008    Marketing Pro             $     950.00 2026-03-12   Sent      
+INV-2026-009    CloudTech Solutions       $    4500.00 2026-03-15   Sent      
+INV-2026-010    Business Dev              $    1850.25 2026-03-18   Sent      
+INV-2026-011    Growth Partners           $    2250.00 2026-03-20   Sent      
+INV-2026-012    Expansion Corp            $    3500.00 2026-03-22   Sent      
+INV-2026-013    Enterprise Suite          $    6500.00 2026-03-25   Sent      

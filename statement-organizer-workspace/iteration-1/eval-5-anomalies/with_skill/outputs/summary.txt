@@ -1,0 +1,354 @@
+================================================================================
+STATEMENT ORGANIZER - ANOMALY DETECTION CAPABILITY
+Fraud Detection and Unusual Transaction Flagging
+================================================================================
+
+OVERVIEW
+--------
+The statement-organizer skill includes comprehensive anomaly detection to help
+identify potentially fraudulent or unusual transactions in your bank statements.
+This feature analyzes Dart Bank and other bank statements to flag suspicious
+activity patterns that may warrant immediate attention.
+
+Once you process a March bank statement, the skill can analyze all transactions
+and generate a flagged transactions report (anomalies-YYYY-MM-DD.csv) highlighting
+any unusual or potentially fraudulent activity.
+
+================================================================================
+ANOMALY DETECTION APPROACH
+================================================================================
+
+The anomaly detector uses a multi-layered approach to identify suspicious
+transactions:
+
+1. AMOUNT DEVIATION ANALYSIS
+   - Establishes baseline spending patterns from historical transactions
+   - Calculates mean and standard deviation of typical transaction amounts
+   - Flags transactions that exceed baseline by 2.5+ standard deviations
+   - Severity scales with deviation multiple (5x typical = HIGH severity)
+   - Example: If typical spending is $200-400, a $4500 transaction is flagged
+
+2. MERCHANT PATTERN ANALYSIS
+   - Maintains list of known merchants from historical transactions
+   - Flags new or previously unseen merchants as "unusual"
+   - Detects suspicious merchant categories (cryptocurrency, gambling, etc.)
+   - Identifies merchant keywords that indicate high-risk transactions
+   - Example: First transaction at "Amazon Fresh" = LOW severity
+   - Example: Transaction at "Crypto Exchange" = HIGH severity
+
+3. DUPLICATE DETECTION
+   - Identifies transactions with identical amounts and merchant names
+   - Detects within-day duplicates that may indicate processing errors
+   - Multiple identical transactions at same merchant = potential fraud
+   - Example: Three $1200 charges at Starbucks on same day = flagged
+
+4. SPENDING PATTERN ANALYSIS
+   - Identifies rapid-fire transactions at same merchant
+   - Detects round-dollar amounts (potential cash withdrawals)
+   - Flags statistically unusual frequency patterns
+   - Example: 3+ transactions at same vendor = LOW severity flag
+   - Example: Round amounts ($500, $600) = possible cash withdrawal
+
+5. SEVERITY CLASSIFICATION
+   - HIGH: Critical alerts requiring immediate investigation
+     * Suspicious merchant categories
+     * Extremely large deviations (5x+ typical)
+     * Clear fraud indicators
+
+   - MEDIUM: Warnings for review
+     * Large but plausible deviations (2-5x typical)
+     * Duplicate transactions
+     * Unusual patterns
+
+   - LOW: Informational flags
+     * New merchants (requires baseline data)
+     * Multiple transactions at same place
+     * Round-dollar amounts
+
+================================================================================
+HOW THE SKILL GENERATES A FLAGGED TRANSACTIONS REPORT
+================================================================================
+
+PROCESS FLOW
+1. User provides Dart Bank statement CSV file
+2. Skill processes statement using learned format mapping
+3. Skill extracts all transactions with date, amount, merchant
+4. Anomaly detector receives transaction list
+5. For each transaction, multiple detection algorithms run in parallel
+6. Transaction receives severity rating (HIGH/MEDIUM/LOW)
+7. All flagged transactions collected into results list
+8. CSV report generated with:
+   - Summary section (total anomalies, breakdown by severity)
+   - Detailed transaction list sorted by severity
+   - Specific reasons for each flag
+
+REPORT STRUCTURE
+================================================================================
+anomalies-YYYY-MM-DD.csv
+├── Header (title, generation timestamp)
+├── Summary Section
+│   ├── Total anomalies detected
+│   ├── Count by severity (HIGH, MEDIUM, LOW)
+│   └── Percentages
+└── Detailed Transactions
+    ├── Sorted by severity (HIGH first, then MEDIUM, then LOW)
+    ├── Columns: Date | Amount | Merchant | Severity | Reasons
+    └── Multiple flags per transaction (amount deviation, merchant pattern, etc.)
+
+================================================================================
+SAMPLE ANOMALY DETECTION LOGIC
+================================================================================
+
+TRANSACTION 1: Wire Transfer - Crypto Exchange ($5200, 2026-03-18)
+Flags Applied:
+  - Amount: $5200 is 5.2x typical spending (baseline ~$1000) → MEDIUM
+  - Merchant: "Crypto Exchange" contains "CRYPTOCURRENCY" pattern → HIGH
+Final Severity: HIGH (merchant override)
+Reasoning: Suspicious activity at cryptocurrency service with large amount
+
+TRANSACTION 2: Amazon Fresh - New Account ($1800, 2026-03-22)
+Flags Applied:
+  - Amount: $1800 is 1.8x typical spending → MEDIUM
+  - Merchant: "Amazon Fresh - New Account" not in historical data → LOW
+Final Severity: MEDIUM
+Reasoning: Large purchase at new merchant (requires investigation)
+
+TRANSACTION 3: Starbucks Coffee ($1200, 2026-03-19)
+Flags Applied:
+  - Amount: $1200 is 1.2x typical → MEDIUM
+  - Duplicate: 3 identical $1200 transactions at Starbucks → MEDIUM
+Final Severity: MEDIUM
+Reasoning: Multiple identical charges at same merchant suggest duplication error
+
+TRANSACTION 4: Gas Station Premium ($600, 2026-03-12)
+Flags Applied:
+  - Amount: $600 is round number (multiple of 100) → LOW
+  - Pattern: Possible cash withdrawal indicator → LOW
+Final Severity: LOW
+Reasoning: Informational flag - likely legitimate cash withdrawal
+
+================================================================================
+KEY DETECTION ALGORITHMS
+================================================================================
+
+ALGORITHM 1: Statistical Deviation Analysis
+- Calculate mean of all historical transaction amounts
+- Calculate standard deviation (spread of typical spending)
+- Flag if: Amount > (Mean + 2.5 * StdDev)
+- Severity scales with: Deviation Multiple = Amount / Mean
+  * 2-3x typical = MEDIUM
+  * 3-5x typical = HIGH
+  * >5x typical = CRITICAL
+
+ALGORITHM 2: Merchant Known/Unknown Classification
+- Maintain whitelist of known merchants from historical data
+- Any transaction at unknown merchant = LOW severity flag
+- Exception: Suspicious keyword detection (crypto, gambling, etc.) = HIGH
+- Requires historical transaction data for accuracy
+
+ALGORITHM 3: Exact Duplicate Detection
+- For each transaction, search for exact duplicates
+- Duplicate = same amount + same merchant + same day
+- Single occurrence = normal
+- 2+ occurrences = MEDIUM severity flag
+- Indicates processing error or fraud attempt
+
+ALGORITHM 4: Pattern Frequency Analysis
+- Count transactions at each merchant across statement
+- 1-2 transactions = normal
+- 3+ transactions at same merchant = LOW flag (possible test charges)
+- Round amounts ($500, $600, etc.) = possible cash withdrawal
+
+================================================================================
+BASELINE CALCULATION STRATEGY
+================================================================================
+
+When you first run anomaly detection, the skill:
+
+1. INITIALIZATION PHASE (First Statement)
+   - No historical data available
+   - Uses hardcoded defaults:
+     * Threshold for "large" = $2000
+     * All new merchants = LOW flag
+     * All unusual categories = HIGH flag
+
+2. LEARNING PHASE (After 1+ Month of Data)
+   - Skill can calculate statistical baselines
+   - Mean transaction amount = $1000 (example)
+   - Standard deviation = $400 (example)
+   - Max typical = Mean + 2.5*StdDev = $2000
+   - Transactions >$2000 begin getting flagged
+
+3. MATURE PHASE (After 3+ Months of Data)
+   - Highly accurate baselines
+   - Known merchant list = 50+ merchants
+   - Can detect subtle patterns
+   - False positive rate drops significantly
+
+================================================================================
+INTEGRATION WITH STATEMENT ORGANIZER
+================================================================================
+
+The anomaly detection is seamlessly integrated into the workflow:
+
+STEP 1: Process Statement
+User: "Process my March Dart Bank statement"
+↓
+Skill: Detects Dart Bank format, parses transactions
+
+STEP 2: Generate Anomaly Report
+(Automatic after parsing)
+↓
+Skill: Runs AnomalyDetector on all transactions
+↓
+Output: anomalies-2026-03-23.csv in /Statements/Logs/
+
+STEP 3: User Reviews Report
+User: Opens anomalies-2026-03-23.csv
+↓
+Sees sorted list of flagged transactions with reasons
+
+STEP 4: Take Action
+Options:
+- Investigate HIGH severity transactions immediately
+- Contact bank if fraud detected
+- Whitelist new merchants for future runs
+- Report false positives to refine baselines
+
+================================================================================
+EXAMPLE OUTPUTS FROM MARCH DART BANK STATEMENT
+================================================================================
+
+12 Anomalies Detected:
+
+HIGH SEVERITY (Requires Investigation):
+- $5200 at "Wire Transfer - Crypto Exchange"
+  Reason: Suspicious category + 5.2x typical spending
+
+- $4500 at "International Wire Service"
+  Reason: 4.5x typical spending, unusual destination
+
+MEDIUM SEVERITY (Review Recommended):
+- $1800 at "Amazon Fresh - New Account"
+  Reason: Large amount + new merchant
+
+- $1650 at "Dispensary Suppliers Corp"
+  Reason: 1.65x typical + unusual category
+
+- $1200 at "Starbucks Coffee" (3 identical)
+  Reason: Potential duplicate/processing error
+
+- $1100 at "Netflix"
+  Reason: Slightly elevated subscription charge
+
+LOW SEVERITY (Informational):
+- $950 at "Unusual Tech Startup"
+  Reason: New merchant
+
+- $800 at "Starbucks Coffee"
+  Reason: Multiple transactions at same merchant
+
+- $750 at "Dispensary Supplies USA"
+  Reason: Multiple transactions, unusual category
+
+- $600 at "Gas Station Premium"
+  Reason: Round dollar amount (cash withdrawal)
+
+- $500 at "Fast Food Chain"
+  Reason: New merchant
+
+- $500 at "Restaurant Downtown"
+  Reason: Round dollar amount
+
+================================================================================
+FRAUD DETECTION EXAMPLES
+================================================================================
+
+SCENARIO 1: Stolen Card (Foreign Country)
+Transaction: $6800 at "Hotel Dubai International" (2026-03-18)
+Flags:
+  ✓ Amount: 6.8x typical = HIGH
+  ✓ Merchant: New merchant + unusual category = HIGH
+  ✓ Merchant: International hotel (potential fraud indicator) = HIGH
+Result: CRITICAL ALERT - Investigate immediately
+
+SCENARIO 2: Duplicate Processing Error
+Transactions:
+  $459.99 at "Target" (2026-03-15, 10:23 AM)
+  $459.99 at "Target" (2026-03-15, 10:24 AM)
+  $459.99 at "Target" (2026-03-15, 10:25 AM)
+Flags:
+  ✓ Duplicates: 3 identical transactions = MEDIUM
+Result: MEDIUM ALERT - Contact bank to reverse duplicates
+
+SCENARIO 3: Compromised Account - Rapid Testing
+Transactions:
+  $1.00 at "Crypto Casino" (2026-03-20, 2:15 AM)
+  $1.00 at "Gambling Site" (2026-03-20, 2:17 AM)
+  $50.00 at "Suspicious Vendor" (2026-03-20, 2:18 AM)
+Flags:
+  ✓ Merchant: Multiple suspicious categories = HIGH
+  ✓ Time: Early morning unusual activity = LOW
+  ✓ Pattern: Rapid-fire transactions = MEDIUM
+Result: HIGH ALERT - Fraud attempt, replace card
+
+================================================================================
+CONFIGURATION & CUSTOMIZATION
+================================================================================
+
+The skill allows customization of detection thresholds:
+
+DEVIATION THRESHOLDS
+- Default: Flag if amount > (Mean + 2.5*StdDev)
+- Can adjust to: 2.0*StdDev (more sensitive) or 3.0*StdDev (less sensitive)
+
+SEVERITY MAPPING
+- Default severity scale: LOW < MEDIUM < HIGH
+- Can customize which conditions trigger which severity
+
+MERCHANT WHITELIST
+- User can provide list of "known good" merchants
+- Prevents false positives for regular vendors
+- Example: "Starbucks", "Office Depot", "Gas Stations" always LOW
+
+KEYWORD BLOCKING
+- Configure suspicious keywords that auto-trigger HIGH severity
+- Examples: "Wire", "Cryptocurrency", "Gambling", "Adult Content"
+
+================================================================================
+BENEFITS OF EARLY ANOMALY DETECTION
+================================================================================
+
+✓ Catch fraud within days instead of weeks
+✓ Identify stolen cards before major damage
+✓ Detect account compromise through unusual activity
+✓ Spot processing errors (duplicates) for correction
+✓ Learn your own spending patterns for better security
+✓ Receive alerts automatically, no manual checking needed
+✓ Exportable reports for insurance claims
+✓ Historical tracking of all flagged transactions
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. PROCESS YOUR MARCH STATEMENT
+   - Use statement-organizer skill to process Dart Bank statement
+   - Anomaly detection runs automatically
+
+2. REVIEW THE REPORT
+   - Open anomalies-2026-03-23.csv
+   - Focus on HIGH severity items first
+   - Contact bank if fraud detected
+
+3. REFINE BASELINES
+   - Each processed statement improves accuracy
+   - After 3 months, detection becomes highly tuned to your patterns
+
+4. SET UP ALERTS
+   - Can configure to email/notify on HIGH severity findings
+   - Integration with banking apps coming soon
+
+================================================================================
+END OF REPORT
+================================================================================
