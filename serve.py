@@ -147,7 +147,7 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.dumps({
                 'model': 'claude-haiku-4-5-20251001',
                 'max_tokens': 1024,
-                'system': 'You are a helpful assistant for the Statement Organizer tool. Help users process bank/credit card statements, fix Python script errors, set up FreshBooks, and manage their financial data. Be concise and practical.',
+                'system': 'You are a helpful assistant for the Statement Organizer tool. Help users process bank/credit card statements, fix Python script errors, and manage their financial data. Be concise and practical.',
                 'messages': body.get('messages', [])
             }).encode()
 

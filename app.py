@@ -10,6 +10,7 @@ from datetime import datetime
 
 import db
 import parsers
+import parser_workshop
 from rex import chat_with_rex
 
 # ---------------------------------------------------------------------------
@@ -28,6 +29,51 @@ st.set_page_config(
 db.init_db()
 
 # ---------------------------------------------------------------------------
+# Profile toggle — Q (personal finance) vs Q42 (Portal42 tax advisor)
+# ---------------------------------------------------------------------------
+# OAuth callbacks always belong to Q42 — detect before profile routing
+_is_oauth_callback = "code" in st.query_params and "state" in st.query_params
+
+if "profile" not in st.session_state:
+    if _is_oauth_callback:
+        st.session_state["profile"] = "Q42"
+    else:
+        st.session_state["profile"] = st.query_params.get("profile", "Q")
+if "_q_page_restored" not in st.session_state:
+    st.session_state["_q_page_init"] = st.query_params.get("page", "Dashboard")
+    st.session_state["_q_page_restored"] = True
+
+st.sidebar.markdown(
+    "<div style='padding:4px 0 8px;font-size:0.65rem;color:#475569;"
+    "text-transform:uppercase;letter-spacing:0.1em'>Profile</div>",
+    unsafe_allow_html=True,
+)
+_pc1, _pc2 = st.sidebar.columns(2)
+_q_active = st.session_state["profile"] == "Q"
+if _pc1.button(
+    "Q", type="primary" if _q_active else "secondary",
+    use_container_width=True, key="_profile_q",
+):
+    st.session_state["profile"] = "Q"
+    st.query_params["profile"] = "Q"
+    st.rerun()
+if _pc2.button(
+    "Q42", type="primary" if not _q_active else "secondary",
+    use_container_width=True, key="_profile_q42",
+):
+    st.session_state["profile"] = "Q42"
+    st.query_params["profile"] = "Q42"
+    st.rerun()
+
+st.sidebar.divider()
+
+# Route to Q42 if selected
+if st.session_state["profile"] == "Q42":
+    from q42_app import render_q42
+    render_q42()
+    st.stop()
+
+# ---------------------------------------------------------------------------
 # Dev log (session-scoped, copyable in dev mode)
 # ---------------------------------------------------------------------------
 if "dev_log" not in st.session_state:
@@ -42,10 +88,16 @@ def _dev_log(msg: str):
 # ---------------------------------------------------------------------------
 st.sidebar.title("💰 Rex")
 st.sidebar.caption("Your personal finance AI")
+_q_pages = ["Dashboard", "Accounts", "Assets", "Transactions", "Goals", "Reminders", "Chat with Rex", "Parser Workshop"]
+_q_page_default = st.session_state.pop("_q_page_init", "Dashboard")
+_q_page_default = _q_page_default if _q_page_default in _q_pages else "Dashboard"
 page = st.sidebar.radio(
     "Navigate",
-    ["Dashboard", "Accounts", "Assets", "Transactions", "Goals", "Reminders", "Chat with Rex"],
+    _q_pages,
+    index=_q_pages.index(_q_page_default),
 )
+st.query_params["profile"] = "Q"
+st.query_params["page"] = page
 
 st.sidebar.divider()
 dev_mode = st.sidebar.toggle("Dev Mode", value=False)
@@ -279,13 +331,13 @@ elif page == "Accounts":
                     new_inst = c3.text_input("Institution", value=acct["institution"] or "")
                     new_scope = c4.selectbox("Scope", SCOPES,
                                              index=SCOPES.index(scope_tag) if scope_tag in SCOPES else 0)
-                    cs, cd = st.columns(2)
-                    if cs.form_submit_button("Save", use_container_width=True):
+                    cs, cd = st.columns([4, 1])
+                    if cs.form_submit_button("💾 Save", type="primary", use_container_width=True):
                         db.update_account(acct["id"], new_name, new_type, new_inst, new_scope)
                         db.save_net_worth_snapshot()
                         st.success("Updated.")
                         st.rerun()
-                    if cd.form_submit_button("Delete", type="secondary", use_container_width=True):
+                    if cd.form_submit_button("🗑", help="Delete this account", use_container_width=True):
                         db.delete_account(acct["id"])
                         st.rerun()
 
@@ -502,7 +554,8 @@ elif page == "Transactions":
                 key="txn_editor",
             )
 
-            if st.button("Save Changes"):
+            sb1, sb2 = st.columns([1, 5])
+            if sb1.button("💾 Save Changes", type="primary", use_container_width=True):
                 # Read only the actual edited cells from session state — reliable across reruns
                 editor_state = st.session_state.get("txn_editor", {})
                 edited_rows = editor_state.get("edited_rows", {})
@@ -530,16 +583,17 @@ elif page == "Transactions":
                     st.info("No changes to save.")
 
             st.divider()
-            st.subheader("Delete a Transaction")
-            txn_labels = [f"{t['date']} — {t['description'][:45]} — ${t['amount']:.2f}" for t in txns]
-            selected_label = st.selectbox("Select transaction to delete", ["— select a transaction —"] + txn_labels)
-            if selected_label != "— select a transaction —":
-                selected_txn = txns[txn_labels.index(selected_label)]
-                if st.button("Delete Selected", type="secondary"):
-                    db.delete_transaction(selected_txn["id"])
-                    st.session_state.pop("txn_editor", None)
-                    st.success("Deleted.")
-                    st.rerun()
+            with st.expander("🗑 Delete a Transaction", expanded=False):
+                txn_labels = [f"{t['date']} — {t['description'][:45]} — ${t['amount']:.2f}" for t in txns]
+                selected_label = st.selectbox("Select transaction to delete", ["— select a transaction —"] + txn_labels)
+                if selected_label != "— select a transaction —":
+                    selected_txn = txns[txn_labels.index(selected_label)]
+                    st.warning(f"This will permanently delete: **{selected_label}**")
+                    if st.button("Confirm Delete", type="secondary"):
+                        db.delete_transaction(selected_txn["id"])
+                        st.session_state.pop("txn_editor", None)
+                        st.success("Deleted.")
+                        st.rerun()
         else:
             st.info("No transactions yet.")
 
@@ -705,7 +759,7 @@ elif page == "Transactions":
             if st.session_state.get("import_success_msg"):
                 st.success(st.session_state.pop("import_success_msg"))
 
-            acct_name = st.selectbox("Import into Account", [a["name"] for a in accounts])
+            acct_name = st.radio("Import into Account", [a["name"] for a in accounts], horizontal=True)
 
             if "uploader_key" not in st.session_state:
                 st.session_state["uploader_key"] = 0
@@ -725,7 +779,7 @@ elif page == "Transactions":
                     try:
                         acct_id = account_map[acct_name]
                         if is_pdf:
-                            parsed_df, stmt_meta = parsers.parse_chase_pdf(tmp_path, acct_id)
+                            parsed_df, stmt_meta = parsers.parse_auto(tmp_path, acct_id)
                         else:
                             parsed_df = parsers.parse_csv(tmp_path, acct_id)
                             # Build statement metadata from the transaction data
@@ -747,6 +801,13 @@ elif page == "Transactions":
                         st.session_state["csv_acct_id"] = acct_id
                         st.session_state["csv_imported"] = False
                         st.session_state.pop("pending_names", None)
+                    except parsers.UnknownInstitutionError as e:
+                        parser_workshop.push_unknown_file("q", uploaded.name, e.raw_text)
+                        st.warning(
+                            f"Rex doesn't recognize the institution for **{uploaded.name}**. "
+                            "It's been sent to the **Parser Workshop** — go there to build a template."
+                        )
+                        st.session_state.pop("csv_df", None)
                     except ValueError as e:
                         st.error(str(e))
                         st.session_state.pop("csv_df", None)
@@ -1098,3 +1159,6 @@ elif page == "Chat with Rex":
     if st.session_state.rex_history and st.button("Clear conversation"):
         st.session_state.rex_history = []
         st.rerun()
+
+elif page == "Parser Workshop":
+    parser_workshop.render_workshop("q")

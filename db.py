@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import json
 from datetime import datetime
 from typing import Optional
 import pandas as pd
@@ -101,6 +102,13 @@ def init_db() -> None:
             name       TEXT NOT NULL UNIQUE,
             is_default INTEGER DEFAULT 0
         )""",
+        """CREATE TABLE IF NOT EXISTS rex_conversations (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            title      TEXT    NOT NULL,
+            messages   TEXT    NOT NULL,
+            created_at TEXT    DEFAULT (datetime('now')),
+            updated_at TEXT    DEFAULT (datetime('now'))
+        )""",
     ]
     for stmt in ddl_statements:
         conn.execute(stmt)
@@ -135,6 +143,55 @@ def init_db() -> None:
             [(c,) for c in defaults],
         )
         conn.commit()
+    conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Conversations
+# ---------------------------------------------------------------------------
+
+def get_conversations() -> list:
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT id, title, created_at, updated_at FROM rex_conversations ORDER BY updated_at DESC"
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_conversation(conv_id: int) -> dict:
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT id, title, messages, created_at, updated_at FROM rex_conversations WHERE id=?",
+        (conv_id,)
+    ).fetchone()
+    conn.close()
+    if not row:
+        return {}
+    d = dict(row)
+    d["messages"] = json.loads(d["messages"])
+    return d
+
+
+def save_conversation(title: str, messages: list) -> int:
+    conn = get_connection()
+    cur = conn.execute(
+        "INSERT INTO rex_conversations (title, messages) VALUES (?, ?)",
+        (title, json.dumps(messages))
+    )
+    conv_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+    return conv_id
+
+
+def update_conversation(conv_id: int, messages: list) -> None:
+    conn = get_connection()
+    conn.execute(
+        "UPDATE rex_conversations SET messages=?, updated_at=datetime('now') WHERE id=?",
+        (json.dumps(messages), conv_id)
+    )
+    conn.commit()
     conn.close()
 
 
