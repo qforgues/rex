@@ -21,6 +21,7 @@ import q42_db
 import q42_rex
 import parser_workshop
 import gl_csv_profiles
+import invoice_recon
 
 
 # ---------------------------------------------------------------------------
@@ -206,7 +207,7 @@ def render_q42():
   <div style="font-size:0.62rem;color:#475569;letter-spacing:0.14em;text-transform:uppercase;margin-top:2px">Tax Advisor Mode</div>
 </div>""", unsafe_allow_html=True)
 
-    _nav_options = ["Overview", "Transactions", "Tax Report", "Ask Rex", "Parser Workshop"]
+    _nav_options = ["Overview", "Transactions", "Tax Report", "Ask Rex", "Invoice Recon", "Parser Workshop"]
     # Apply any pending programmatic navigation BEFORE the widget is instantiated
     if "q42_nav_pending" in st.session_state:
         st.session_state["q42_nav_radio"] = st.session_state.pop("q42_nav_pending")
@@ -283,6 +284,8 @@ def render_q42():
         _page_tax_report()
     elif page == "Ask Rex":
         _page_ask_rex()
+    elif page == "Invoice Recon":
+        invoice_recon.render_invoice_recon()
     elif page == "Parser Workshop":
         parser_workshop.render_workshop("q42")
 
@@ -1107,11 +1110,97 @@ border-radius:10px;padding:16px 20px;margin-bottom:20px">
 
     st.divider()
 
-    # Chat
-    st.subheader("Chat with Rex")
+    # ── Chat with Rex ─────────────────────────────────────────────────────────
+
+    def _q42_conv_title(messages: list) -> str:
+        for m in messages:
+            if m["role"] == "user":
+                t = m["content"][:50]
+                return (t + "…") if len(m["content"]) > 50 else t
+        return "Untitled"
+
+    def _q42_format_conv(messages: list) -> str:
+        lines = []
+        for m in messages:
+            role = "You" if m["role"] == "user" else "Rex"
+            lines.append(f"[{role}]\n{m['content']}\n")
+        return "\n".join(lines)
+
+    # load persisted conversations
+    q42_convs = q42_db.get_q42_conversations()
 
     if "q42_chat_history" not in st.session_state:
         st.session_state["q42_chat_history"] = []
+        st.session_state["q42_current_conv_id"] = None
+        if q42_convs:
+            recent_q42 = q42_db.get_q42_conversation(q42_convs[0]["id"])
+            st.session_state["q42_chat_history"] = recent_q42["messages"]
+            st.session_state["q42_current_conv_id"] = q42_convs[0]["id"]
+
+    if "q42_current_conv_id" not in st.session_state:
+        st.session_state["q42_current_conv_id"] = None
+
+    # header row
+    st.subheader("Chat with Rex")
+
+    q42_conv_ids = [None] + [c["id"] for c in q42_convs]
+    q42_conv_labels = ["+ New Conversation"] + [
+        f"{c['title'][:45]}{'…' if len(c['title']) > 45 else ''}  ·  {c['updated_at'][:10]}"
+        for c in q42_convs
+    ]
+
+    q42_cur_id = st.session_state["q42_current_conv_id"]
+    q42_cur_idx = 0
+    if q42_cur_id is not None:
+        try:
+            q42_cur_idx = q42_conv_ids.index(q42_cur_id)
+        except ValueError:
+            q42_cur_idx = 0
+
+    q42_has_content = bool(st.session_state["q42_chat_history"])
+
+    dcol, copyc, expc = st.columns([4, 1, 1])
+    with dcol:
+        q42_sel_idx = st.selectbox(
+            "Tax conversation",
+            options=list(range(len(q42_conv_labels))),
+            format_func=lambda i: q42_conv_labels[i],
+            index=q42_cur_idx,
+            label_visibility="collapsed",
+            key="q42_conv_selector",
+        )
+        q42_new_id = q42_conv_ids[q42_sel_idx]
+        if q42_new_id != q42_cur_id:
+            if q42_new_id is None:
+                st.session_state["q42_chat_history"] = []
+                st.session_state["q42_current_conv_id"] = None
+            else:
+                q42_loaded = q42_db.get_q42_conversation(q42_new_id)
+                st.session_state["q42_chat_history"] = q42_loaded["messages"]
+                st.session_state["q42_current_conv_id"] = q42_new_id
+            st.rerun()
+
+    with copyc:
+        if q42_has_content:
+            if st.button("Copy", use_container_width=True, key="q42_copy_btn"):
+                st.session_state["q42_show_copy"] = not st.session_state.get("q42_show_copy", False)
+
+    with expc:
+        if q42_has_content:
+            q42_export_txt = _q42_format_conv(st.session_state["q42_chat_history"])
+            q42_slug = _q42_conv_title(st.session_state["q42_chat_history"])[:30].replace(" ", "_")
+            st.download_button(
+                "Export",
+                data=q42_export_txt,
+                file_name=f"rex_tax_{q42_slug}.txt",
+                mime="text/plain",
+                use_container_width=True,
+                key="q42_export_btn",
+            )
+
+    if st.session_state.get("q42_show_copy") and q42_has_content:
+        with st.expander("Conversation text — click the icon to copy", expanded=True):
+            st.code(_q42_format_conv(st.session_state["q42_chat_history"]), language=None)
 
     # Build financial context
     ctx_parts = []
@@ -1148,6 +1237,12 @@ border-radius:10px;padding:16px 20px;margin-bottom:20px">
                     financial_context=fin_context,
                 )
             st.markdown(response)
+        msgs = st.session_state["q42_chat_history"]
+        if st.session_state["q42_current_conv_id"] is None:
+            new_id = q42_db.save_q42_conversation(_q42_conv_title(msgs), msgs)
+            st.session_state["q42_current_conv_id"] = new_id
+        else:
+            q42_db.update_q42_conversation(st.session_state["q42_current_conv_id"], msgs)
 
     # Chat history display
     for msg in st.session_state["q42_chat_history"]:
@@ -1169,10 +1264,14 @@ border-radius:10px;padding:16px 20px;margin-bottom:20px">
                 )
             st.markdown(response)
 
-    if st.session_state["q42_chat_history"]:
-        if st.button("Clear Chat", type="secondary"):
-            st.session_state["q42_chat_history"] = []
-            st.rerun()
+        # auto-save / update conversation in DB
+        msgs = st.session_state["q42_chat_history"]
+        if st.session_state["q42_current_conv_id"] is None:
+            new_id = q42_db.save_q42_conversation(_q42_conv_title(msgs), msgs)
+            st.session_state["q42_current_conv_id"] = new_id
+        else:
+            q42_db.update_q42_conversation(st.session_state["q42_current_conv_id"], msgs)
+        st.rerun()
 
 
 def _run_review_flow(period: dict, deductions: dict, profile: dict):

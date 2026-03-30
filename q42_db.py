@@ -129,7 +129,7 @@ def init_q42_db() -> None:
         except sqlite3.OperationalError:
             pass  # column already exists
 
-    for svc in ["qbo"]:
+    for svc in ["qbo", "freshbooks"]:
         conn.execute(
             "INSERT OR IGNORE INTO q42_connections (service) VALUES (?)", (svc,)
         )
